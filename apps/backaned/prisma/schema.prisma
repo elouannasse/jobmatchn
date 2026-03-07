@@ -40,22 +40,38 @@ model CandidateProfile {
 }
 
 model RecruiterProfile {
-  id          String     @id @default(uuid())
-  userId      String     @unique
-  companyName String
-  companySize String?
-  industry    String?
-  website     String?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  offers      JobOffer[]
-  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  companyId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  jobs        Job[]
+  company     Company  @relation(fields: [companyId], references: [id])
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("recruiter_profiles")
 }
 
-model JobOffer {
+model Company {
+  id          String             @id @default(uuid())
+  name        String
+  logoUrl     String?
+  description String?
+  website     String?
+  location    String?
+  industry    String?
+  size        String?
+  recruiters  RecruiterProfile[]
+  jobs        Job[]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@map("companies")
+}
+
+model Job {
   id           String           @id @default(uuid())
+  companyId    String
   recruiterId  String
   title        String
   description  String
@@ -68,23 +84,24 @@ model JobOffer {
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
   applications Application[]
+  company      Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
   recruiter    RecruiterProfile @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
 
-  @@map("job_offers")
+  @@map("jobs")
 }
 
 model Application {
   id          String            @id @default(uuid())
   candidateId String
-  jobOfferId  String
+  jobId       String
   status      ApplicationStatus @default(PENDING)
   coverLetter String?
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
   candidate   CandidateProfile  @relation(fields: [candidateId], references: [id], onDelete: Cascade)
-  jobOffer    JobOffer          @relation(fields: [jobOfferId], references: [id], onDelete: Cascade)
+  job         Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
 
-  @@unique([candidateId, jobOfferId])
+  @@unique([candidateId, jobId])
   @@map("applications")
 }
 
