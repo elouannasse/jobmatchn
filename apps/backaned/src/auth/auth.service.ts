@@ -1,15 +1,49 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto, UserRole } from './dto/register.dto';
 import { HashingService } from './hashing.service';
 import { Prisma } from '@prisma/client';
+import { JwtService } from '@nestjs/jwt';
+import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
     private prisma: PrismaService,
     private hashingService: HashingService,
+    private jwtService: JwtService,
   ) {}
+
+  async login(dto: LoginDto) {
+    const { email, password } = dto;
+
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('Identifiants invalides');
+    }
+
+    const isPasswordValid = await this.hashingService.compare(
+      password,
+      user.password,
+    );
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Identifiants invalides');
+    }
+
+    const payload = { sub: user.id, email: user.email, role: user.role };
+
+    return {
+      accessToken: await this.jwtService.signAsync(payload),
+    };
+  }
 
   async register(dto: RegisterDto) {
     const { email, password, firstName, lastName, role } = dto;
@@ -55,6 +89,7 @@ export class AuthService {
       }
 
       // Ne pas renvoyer le mot de passe
+
       const userResult: Record<string, any> = { ...user };
       delete userResult.password;
 
