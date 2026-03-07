@@ -89,6 +89,7 @@ export class AuthService {
       }
 
       // Ne pas renvoyer le mot de passe
+
       const userResult: Record<string, any> = { ...user };
       delete userResult.password;
 
