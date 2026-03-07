@@ -1,12 +1,15 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto, UserRole } from './dto/register.dto';
-import * as bcrypt from 'bcrypt';
+import { HashingService } from './hashing.service';
 import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private hashingService: HashingService,
+  ) {}
 
   async register(dto: RegisterDto) {
     const { email, password, firstName, lastName, role } = dto;
@@ -21,7 +24,7 @@ export class AuthService {
     }
 
     // Hacher le mot de passe
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await this.hashingService.hash(password);
 
     // Créer l'utilisateur et son profil dans une transaction
     return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
