@@ -42,21 +42,37 @@ model CandidateProfile {
 model RecruiterProfile {
   id          String     @id @default(uuid())
   userId      String     @unique
-  companyName String
-  companySize String?
-  industry    String?
-  website     String?
+  companyId   String?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
   offers      JobOffer[]
+  company     Company?   @relation(fields: [companyId], references: [id])
   user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("recruiter_profiles")
 }
 
+model Company {
+  id          String             @id @default(uuid())
+  name        String
+  logoUrl     String?
+  description String?
+  website     String?
+  location    String?
+  industry    String?
+  size        String?
+  recruiters  RecruiterProfile[]
+  jobs        JobOffer[]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@map("companies")
+}
+
 model JobOffer {
   id           String           @id @default(uuid())
   recruiterId  String
+  companyId    String
   title        String
   description  String
   location     String
@@ -68,6 +84,7 @@ model JobOffer {
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
   applications Application[]
+  company      Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
   recruiter    RecruiterProfile @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
 
   @@map("job_offers")
