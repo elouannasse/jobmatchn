@@ -11,6 +11,10 @@ import { ContractType } from '@prisma/client';
 export class CreateJobDto {
   @IsNotEmpty()
   @IsString()
+  companyId: string;
+
+  @IsNotEmpty()
+  @IsString()
   title: string;
 
   @IsNotEmpty()

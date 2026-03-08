@@ -83,7 +83,6 @@ export class AuthService {
         await tx.recruiterProfile.create({
           data: {
             userId: user.id,
-            companyName: 'Ma Compagnie', // Valeur par défaut, à mettre à jour plus tard
           },
         });
       }
