@@ -44,13 +44,21 @@ export class ApplicationService {
       throw new ConflictException('Vous avez déjà postulé à cette offre');
     }
 
-    return this.prisma.application.create({
-      data: {
-        candidateId: candidate.id,
-        jobOfferId: dto.jobOfferId,
-        coverLetter: dto.coverLetter,
-      },
-    });
+    try {
+      return await this.prisma.application.create({
+        data: {
+          candidateId: candidate.id,
+          jobOfferId: dto.jobOfferId,
+          coverLetter: dto.coverLetter,
+        },
+      });
+    } catch (error: any) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      if (error && typeof error === 'object' && error.code === 'P2002') {
+        throw new ConflictException('Vous avez déjà postulé à cette offre');
+      }
+      throw error;
+    }
   }
 
   async findMyApplications(userId: string) {
