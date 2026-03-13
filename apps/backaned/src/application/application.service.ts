@@ -7,10 +7,14 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateApplicationDto } from './dto/create-application.dto';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
+import { MatchingService } from '../matching/matching.service';
 
 @Injectable()
 export class ApplicationService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private matchingService: MatchingService,
+  ) {}
 
   async create(userId: string, dto: CreateApplicationDto) {
     const candidate = await this.prisma.candidateProfile.findUnique({
@@ -29,6 +33,12 @@ export class ApplicationService {
     if (!jobOffer) {
       throw new NotFoundException("Offre d'emploi non trouvée");
     }
+
+    // Calcul du score de compatibilité
+    const score = this.matchingService.calculateScore(
+      candidate.skills,
+      jobOffer.skills,
+    );
 
     // Vérifier si le candidat a déjà postulé
     const existingApplication = await this.prisma.application.findUnique({
@@ -50,6 +60,7 @@ export class ApplicationService {
           candidateId: candidate.id,
           jobOfferId: dto.jobOfferId,
           coverLetter: dto.coverLetter,
+          score,
         },
       });
     } catch (error: any) {

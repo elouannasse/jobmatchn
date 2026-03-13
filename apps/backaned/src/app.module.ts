@@ -8,6 +8,7 @@ import { ProfileModule } from './profile/profile.module';
 import { JobModule } from './job/job.module';
 import { CompanyModule } from './company/company.module';
 import { ApplicationModule } from './application/application.module';
+import { MatchingModule } from './matching/matching.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { ApplicationModule } from './application/application.module';
     JobModule,
     CompanyModule,
     ApplicationModule,
+    MatchingModule,
   ],
   controllers: [AppController],
   providers: [AppService],
