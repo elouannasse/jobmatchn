@@ -10,6 +10,7 @@ import { JobModule } from './job/job.module';
 import { CompanyModule } from './company/company.module';
 import { ApplicationModule } from './application/application.module';
 import { MatchingModule } from './matching/matching.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { MatchingModule } from './matching/matching.module';
     CompanyModule,
     ApplicationModule,
     MatchingModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [AppService],

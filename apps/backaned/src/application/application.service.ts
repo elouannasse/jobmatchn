@@ -8,12 +8,14 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateApplicationDto } from './dto/create-application.dto';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
 import { MatchingService } from '../matching/matching.service';
+import { NotificationGateway } from '../notification/notification.gateway';
 
 @Injectable()
 export class ApplicationService {
   constructor(
     private prisma: PrismaService,
     private matchingService: MatchingService,
+    private notificationGateway: NotificationGateway,
   ) {}
 
   async create(userId: string, dto: CreateApplicationDto) {
@@ -63,9 +65,13 @@ export class ApplicationService {
           score,
         },
       });
-    } catch (error: any) {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      if (error && typeof error === 'object' && error.code === 'P2002') {
+    } catch (error: unknown) {
+      if (
+        error &&
+        typeof error === 'object' &&
+        'code' in error &&
+        error.code === 'P2002'
+      ) {
         throw new ConflictException('Vous avez déjà postulé à cette offre');
       }
       throw error;
@@ -132,7 +138,10 @@ export class ApplicationService {
   ) {
     const application = await this.prisma.application.findUnique({
       where: { id: applicationId },
-      include: { jobOffer: { include: { recruiter: true } } },
+      include: {
+        jobOffer: { include: { recruiter: true } },
+        candidate: true,
+      },
     });
 
     if (!application) {
@@ -145,9 +154,25 @@ export class ApplicationService {
       );
     }
 
-    return this.prisma.application.update({
+    const updatedApplication = await this.prisma.application.update({
       where: { id: applicationId },
       data: { status: dto.status },
     });
+
+    // Envoyer une notification en temps réel au candidat
+    const candidate = application.candidate as { userId: string } | null;
+    if (candidate) {
+      this.notificationGateway.sendToUser(
+        candidate.userId,
+        'application_status_updated',
+        {
+          applicationId: updatedApplication.id,
+          status: updatedApplication.status,
+          jobTitle: application.jobOffer.title,
+        },
+      );
+    }
+
+    return updatedApplication;
   }
 }
