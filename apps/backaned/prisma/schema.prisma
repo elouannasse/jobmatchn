@@ -96,6 +96,7 @@ model Application {
   jobOfferId  String
   status      ApplicationStatus @default(PENDING)
   coverLetter String?
+  score       Int?
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
   candidate   CandidateProfile  @relation(fields: [candidateId], references: [id], onDelete: Cascade)
