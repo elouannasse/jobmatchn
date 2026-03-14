@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence } from "framer-motion";
 import { recruiterOnboardingSchema, RecruiterOnboardingInput } from "@/lib/validations/profile.schema";
 import { profileService } from "@/services/profile.service";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { Building2, Globe, Users, Info, MapPin, ChevronRight, ChevronLeft, Check } from "lucide-react";
+import { Building2, Globe, Info, MapPin, ChevronRight, ChevronLeft, Check } from "lucide-react";
+import { RichTextEditorField } from "@/components/ui/rich-text-editor";
 
 const steps = [
   { id: 1, title: "L'Entreprise", icon: Building2 },
@@ -23,6 +24,7 @@ export function RecruiterOnboarding() {
     register,
     handleSubmit,
     trigger,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<RecruiterOnboardingInput>({
     resolver: zodResolver(recruiterOnboardingSchema),
@@ -45,8 +47,9 @@ export function RecruiterOnboarding() {
       await profileService.createCompany(data);
       toast.success("Entreprise créée avec succès !");
       router.push("/dashboard/recruiter");
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Erreur lors de la création de l'entreprise");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Erreur lors de la création de l&apos;entreprise";
+      toast.error(message);
     }
   };
 
@@ -83,7 +86,7 @@ export function RecruiterOnboarding() {
               className="space-y-6"
             >
               <div className="space-y-2">
-                <label className="text-sm font-medium">Nom de l'entreprise</label>
+                <label className="text-sm font-medium">Nom de l&apos;entreprise</label>
                 <div className="relative">
                   <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <input
@@ -97,7 +100,7 @@ export function RecruiterOnboarding() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Secteur d'activité</label>
+                  <label className="text-sm font-medium">Secteur d&apos;activité</label>
                   <input
                     {...register("industry")}
                     className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary outline-none"
@@ -160,12 +163,17 @@ export function RecruiterOnboarding() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Description de l'entreprise</label>
-                <textarea
-                  {...register("description")}
-                  rows={5}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary outline-none resize-none"
-                  placeholder="Décrivez la mission de votre entreprise..."
+                <label className="text-sm font-medium">Description de l&apos;entreprise</label>
+                <Controller
+                  name="description"
+                  control={control}
+                  render={({ field }) => (
+                    <RichTextEditorField
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Décrivez la mission de votre entreprise..."
+                    />
+                  )}
                 />
                 {errors.description && <p className="text-xs text-red-400">{errors.description.message}</p>}
               </div>

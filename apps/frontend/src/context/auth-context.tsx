@@ -21,6 +21,12 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+interface DecodedToken {
+  sub: string;
+  email: string;
+  role: "CANDIDATE" | "RECRUITER";
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -30,13 +36,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const token = Cookies.get("accessToken");
     if (token) {
       try {
-        const decoded: any = jwtDecode(token);
+        const decoded = jwtDecode<DecodedToken>(token);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setUser({
           id: decoded.sub,
           email: decoded.email,
           role: decoded.role,
         });
-      } catch (error) {
+      } catch {
         Cookies.remove("accessToken");
       }
     }
@@ -45,7 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = (token: string) => {
     Cookies.set("accessToken", token, { expires: 7 });
-    const decoded: any = jwtDecode(token);
+    const decoded = jwtDecode<DecodedToken>(token);
     setUser({
       id: decoded.sub,
       email: decoded.email,

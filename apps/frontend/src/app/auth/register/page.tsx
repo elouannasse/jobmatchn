@@ -31,10 +31,9 @@ export default function RegisterPage() {
       await authService.register(data);
       toast.success("Inscription réussie ! Connectez-vous maintenant.");
       router.push("/auth/login");
-    } catch (error: any) {
-      toast.error(
-        error.response?.data?.message || "Une erreur est survenue lors de l'inscription"
-      );
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Une erreur est survenue lors de l&apos;inscription";
+      toast.error(message);
     }
   };
 
@@ -55,7 +54,7 @@ export default function RegisterPage() {
               <Sparkles className="w-6 h-6 text-primary" />
             </div>
             <h1 className="text-3xl font-bold mb-2 text-foreground">Créer un compte</h1>
-            <p className="text-muted-foreground">Rejoignez JobMatchn aujourd'hui</p>
+            <p className="text-muted-foreground">Rejoignez JobMatchn aujourd&apos;hui</p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence } from "framer-motion";
 import { candidateProfileSchema, CandidateProfileInput } from "@/lib/validations/profile.schema";
@@ -9,6 +9,7 @@ import { profileService } from "@/services/profile.service";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Briefcase, MapPin, Code, Link as LinkIcon, ChevronRight, ChevronLeft, Check } from "lucide-react";
+import { RichTextEditorField } from "@/components/ui/rich-text-editor";
 
 const steps = [
   { id: 1, title: "Mission", icon: Briefcase },
@@ -26,6 +27,7 @@ export function CandidateOnboarding() {
     setValue,
     watch,
     trigger,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<CandidateProfileInput>({
     resolver: zodResolver(candidateProfileSchema),
@@ -66,8 +68,9 @@ export function CandidateOnboarding() {
       await profileService.updateCandidateProfile(data);
       toast.success("Profil complété avec succès !");
       router.push("/dashboard/candidate");
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Erreur lors de la mise à jour du profil");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Erreur lors de la mise à jour du profil";
+      toast.error(message);
     }
   };
 
@@ -115,11 +118,16 @@ export function CandidateOnboarding() {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Résumé de votre parcours</label>
-                <textarea
-                  {...register("summary")}
-                  rows={5}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary outline-none resize-none"
-                  placeholder="Parlez-nous de vos expériences et de ce que vous recherchez..."
+                <Controller
+                  name="summary"
+                  control={control}
+                  render={({ field }) => (
+                    <RichTextEditorField
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Parlez-nous de vos expériences et de ce que vous recherchez..."
+                    />
+                  )}
                 />
                 {errors.summary && <p className="text-xs text-red-400">{errors.summary.message}</p>}
               </div>

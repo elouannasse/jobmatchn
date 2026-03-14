@@ -25,10 +25,9 @@ export default function LoginPage() {
       const response = await authService.login(data);
       login(response.accessToken);
       toast.success("Bon retour parmi nous !");
-    } catch (error: any) {
-      toast.error(
-        error.response?.data?.message || "Identifiants invalides"
-      );
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Identifiants invalides";
+      toast.error(message);
     }
   };
 
