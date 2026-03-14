@@ -22,4 +22,38 @@ export class JobService {
       },
     });
   }
+
+  async findAll(query: any) {
+    const { title, location, contractType, skills, salaryMin } = query;
+
+    return this.prisma.jobOffer.findMany({
+      where: {
+        isPublished: true,
+        ...(title && {
+          title: { contains: title, mode: 'insensitive' },
+        }),
+        ...(location && {
+          location: { contains: location, mode: 'insensitive' },
+        }),
+        ...(contractType && { contractType }),
+        ...(salaryMin && {
+          salaryMin: { gte: Number(salaryMin) },
+        }),
+        ...(skills && skills.length > 0 && {
+          skills: { hasSome: Array.isArray(skills) ? skills : [skills] },
+        }),
+      },
+      include: {
+        company: {
+          select: {
+            name: true,
+            logoUrl: true,
+            location: true,
+            industry: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
 }
