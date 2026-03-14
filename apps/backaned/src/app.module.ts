@@ -11,6 +11,7 @@ import { CompanyModule } from './company/company.module';
 import { ApplicationModule } from './application/application.module';
 import { MatchingModule } from './matching/matching.module';
 import { NotificationModule } from './notification/notification.module';
+import { StatsModule } from './stats/stats.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { NotificationModule } from './notification/notification.module';
     ApplicationModule,
     MatchingModule,
     NotificationModule,
+    StatsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
