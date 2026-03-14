@@ -30,5 +30,10 @@ export const profileService = {
   async getMyProfile() {
     const response = await api.get("/auth/me");
     return response.data;
+  },
+
+  async getPublicCompany(id: string) {
+    const response = await api.get(`/companies/${id}`);
+    return response.data;
   }
 };

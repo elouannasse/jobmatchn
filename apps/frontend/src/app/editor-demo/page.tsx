@@ -24,7 +24,8 @@ export default function EditorDemoPage() {
           </motion.h1>
           <motion.p
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1, delay: 0.2 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
             className="text-muted-foreground text-lg"
           >
             Composant réutilisable basé sur <span className="text-primary font-semibold">TipTap</span> — utilisé pour les offres d&apos;emploi et les lettres de motivation.
