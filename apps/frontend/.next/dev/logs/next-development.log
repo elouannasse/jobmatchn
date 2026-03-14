@@ -1,0 +1,20 @@
+[00:00:01.741] Server  LOG     ✓ Ready in 1268ms
+[00:00:16.757] Server  LOG     ○ Compiling / ...
+[00:00:19.300] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:29.356] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:31.552] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:33.390] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:35.585] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:02:20.547] Server  LOG     ✓ Compiled in 110ms
+[00:02:44.869] Server  LOG     ✓ Compiled in 112ms
+[00:02:44.975] Browser ERROR   uncaughtError: TypeError: watch is not a function
+[00:03:07.694] Server  WARN    ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+[00:03:07.723] Server  LOG     ✓ Compiled in 25ms
+[00:03:08.155] Server  ERROR   ⨯ TypeError: watch is not a function
+[00:03:08.504] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:03:09.752] Browser ERROR   uncaughtError: TypeError: watch is not a function
+[00:03:12.604] Server  WARN    ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+[00:03:12.938] Server  LOG     ✓ Compiled in 50ms
+[00:03:13.168] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:04:18.276] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:05:24.416] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
