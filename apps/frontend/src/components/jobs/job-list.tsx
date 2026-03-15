@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { MapPin, Briefcase, Calendar, Building2, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { ApplyButton } from "./apply-button";
 
 export interface Job {
   id: string;
@@ -23,9 +24,10 @@ export interface Job {
 
 export interface JobCardProps {
   job: Job;
+  initiallyApplied?: boolean;
 }
 
-export function JobCard({ job }: JobCardProps) {
+export function JobCard({ job, initiallyApplied = false }: JobCardProps) {
   return (
     <motion.div
       layout
@@ -88,18 +90,29 @@ export function JobCard({ job }: JobCardProps) {
           <Calendar className="w-3.5 h-3.5" />
           Publié le {new Date(job.createdAt).toLocaleDateString()}
         </span>
-        <Link 
-          href={`/jobs/${job.id}`}
-          className="text-primary font-bold hover:underline"
-        >
-          Détails de l&apos;offre
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link 
+            href={`/jobs/${job.id}`}
+            className="text-muted-foreground hover:text-foreground transition-colors text-sm font-medium mr-2"
+          >
+            Détails
+          </Link>
+          <ApplyButton jobId={job.id} initiallyApplied={initiallyApplied} />
+        </div>
       </div>
     </motion.div>
   );
 }
 
-export function JobList({ jobs, loading }: { jobs: Job[]; loading: boolean }) {
+export function JobList({ 
+  jobs, 
+  loading, 
+  appliedJobIds = new Set() 
+}: { 
+  jobs: Job[]; 
+  loading: boolean; 
+  appliedJobIds?: Set<string>;
+}) {
   if (loading) {
     return (
       <div className="space-y-6">
@@ -141,7 +154,11 @@ export function JobList({ jobs, loading }: { jobs: Job[]; loading: boolean }) {
   return (
     <div className="space-y-6">
       {jobs.map((job) => (
-        <JobCard key={job.id} job={job} />
+        <JobCard 
+          key={job.id} 
+          job={job} 
+          initiallyApplied={appliedJobIds.has(job.id)}
+        />
       ))}
     </div>
   );

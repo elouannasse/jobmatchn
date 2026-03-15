@@ -6,9 +6,13 @@ import { JobList, Job } from "@/components/jobs/job-list";
 import { jobService, JobSearchFilters } from "@/services/job.service";
 import { motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
+import { useAuth } from "@/context/auth-context";
+import { applicationService } from "@/services/application.service";
 
 export default function JobsPage() {
+  const { user } = useAuth();
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [appliedJobIds, setAppliedJobIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<JobSearchFilters>({});
 
@@ -17,12 +21,18 @@ export default function JobsPage() {
     try {
       const data = await jobService.getJobs(currentFilters);
       setJobs(data);
+
+      if (user?.role === "CANDIDATE") {
+        const apps = await applicationService.getMyApplications();
+        const ids = new Set(apps.map((a) => a.jobOfferId));
+        setAppliedJobIds(ids);
+      }
     } catch (error) {
       console.error("Failed to fetch jobs:", error);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     fetchJobs(filters);
@@ -79,7 +89,7 @@ export default function JobsPage() {
               </div>
             </div>
 
-            <JobList jobs={jobs} loading={loading} />
+            <JobList jobs={jobs} loading={loading} appliedJobIds={appliedJobIds} />
           </div>
         </div>
       </div>
