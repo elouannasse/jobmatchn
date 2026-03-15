@@ -1,10 +1,14 @@
 import { Injectable, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateJobDto } from './dto/create-job.dto';
+import { MatchingService } from '../matching/matching.service';
 
 @Injectable()
 export class JobService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private matchingService: MatchingService,
+  ) {}
 
   async create(recruiterUserId: string, dto: CreateJobDto) {
     const recruiter = await this.prisma.recruiterProfile.findUnique({
@@ -23,10 +27,10 @@ export class JobService {
     });
   }
 
-  async findAll(query: any) {
+  async findAll(query: any, userId?: string) {
     const { title, location, contractType, skills, salaryMin } = query;
 
-    return this.prisma.jobOffer.findMany({
+    const jobs = await this.prisma.jobOffer.findMany({
       where: {
         isPublished: true,
         ...(title && {
@@ -55,5 +59,24 @@ export class JobService {
       },
       orderBy: { createdAt: 'desc' },
     });
+
+    // If userId is provided, calculate match score if the user is a candidate
+    if (userId) {
+      const candidate = await this.prisma.candidateProfile.findUnique({
+        where: { userId },
+      });
+
+      if (candidate) {
+        return jobs.map((job) => ({
+          ...job,
+          matchScore: this.matchingService.calculateScore(
+            candidate.skills,
+            job.skills,
+          ),
+        }));
+      }
+    }
+
+    return jobs;
   }
 }

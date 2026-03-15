@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { MapPin, Briefcase, Calendar, Building2, ChevronRight } from "lucide-react";
+import { MapPin, Briefcase, Calendar, Building2, ChevronRight, Sparkles } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { ApplyButton } from "./apply-button";
@@ -13,6 +13,7 @@ export interface Job {
   contractType: string;
   salaryMin?: number;
   salaryMax?: number;
+  matchScore?: number;
   createdAt: string;
   company: {
     name: string;
@@ -62,6 +63,28 @@ export function JobCard({ job, initiallyApplied = false }: JobCardProps) {
               {job.contractType}
             </span>
           </div>
+
+          {job.matchScore !== undefined && (
+            <div className="flex items-center gap-2 mt-2">
+              <div className="flex-1 h-1.5 bg-white/5 rounded-full overflow-hidden max-w-[100px]">
+                <motion.div 
+                  initial={{ width: 0 }}
+                  animate={{ width: `${job.matchScore}%` }}
+                  className={`h-full ${
+                    job.matchScore >= 80 ? 'bg-green-500' : 
+                    job.matchScore >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+                  }`}
+                />
+              </div>
+              <span className={`text-[10px] font-black uppercase tracking-tighter flex items-center gap-1 ${
+                job.matchScore >= 80 ? 'text-green-400' : 
+                job.matchScore >= 50 ? 'text-yellow-400' : 'text-red-400'
+              }`}>
+                <Sparkles className="w-3 h-3 fill-current" />
+                {job.matchScore}% Match
+              </span>
+            </div>
+          )}
 
           <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mt-4">
             <span className="flex items-center gap-1.5">

@@ -6,6 +6,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../auth/dto/register.dto';
+import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 
 @Controller('jobs')
 export class JobController {
@@ -21,7 +22,10 @@ export class JobController {
   }
 
   @Get()
-  findAll(@Query() query: SearchJobDto) {
-    return this.jobService.findAll(query);
+  @UseGuards(OptionalJwtAuthGuard)
+  findAll(@Query() query: SearchJobDto, @Request() req: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const userId = req.user?.userId as string | undefined;
+    return this.jobService.findAll(query, userId);
   }
 }
