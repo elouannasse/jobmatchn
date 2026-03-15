@@ -27,6 +27,22 @@ export interface Application {
   createdAt: string;
 }
 
+export interface RecruiterApplication extends Application {
+  score?: number;
+  jobOffer: {
+    id: string;
+    title: string;
+  };
+  candidate: {
+    location?: string;
+    user: {
+      firstName: string;
+      lastName: string;
+      email: string;
+    };
+  };
+}
+
 export const applicationService = {
   async apply(dto: CreateApplicationDto): Promise<Application> {
     const response = await api.post("/applications", dto);
@@ -36,5 +52,15 @@ export const applicationService = {
   async getMyApplications(): Promise<Application[]> {
     const response = await api.get("/applications/my");
     return response.data;
-  }
+  },
+
+  async getRecruiterApplications(): Promise<RecruiterApplication[]> {
+    const response = await api.get("/applications/recruiter");
+    return response.data;
+  },
+
+  async updateStatus(id: string, status: string): Promise<Application> {
+    const response = await api.patch(`/applications/${id}/status`, { status });
+    return response.data;
+  },
 };

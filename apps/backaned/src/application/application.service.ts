@@ -101,6 +101,44 @@ export class ApplicationService {
     });
   }
 
+  async findAllForRecruiter(userId: string) {
+    const recruiter = await this.prisma.recruiterProfile.findUnique({
+      where: { userId },
+    });
+
+    if (!recruiter) {
+      throw new ForbiddenException('Profil recruteur non trouvé');
+    }
+
+    return this.prisma.application.findMany({
+      where: {
+        jobOffer: {
+          recruiterId: recruiter.id,
+        },
+      },
+      include: {
+        jobOffer: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+        candidate: {
+          include: {
+            user: {
+              select: {
+                firstName: true,
+                lastName: true,
+                email: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async findByJob(jobId: string, recruiterUserId: string) {
     const jobOffer = await this.prisma.jobOffer.findUnique({
       where: { id: jobId },

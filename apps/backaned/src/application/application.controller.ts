@@ -37,6 +37,14 @@ export class ApplicationController {
     return this.applicationService.findMyApplications(userId);
   }
 
+  @Get('recruiter')
+  @Roles(UserRole.RECRUITER)
+  findForRecruiter(@Request() req: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const userId = req.user.userId as string;
+    return this.applicationService.findAllForRecruiter(userId);
+  }
+
   @Get('job/:jobId')
   @Roles(UserRole.RECRUITER)
   findByJob(@Param('jobId') jobId: string, @Request() req: any) {
