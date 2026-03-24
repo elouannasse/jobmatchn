@@ -12,6 +12,7 @@ import { ApplicationModule } from './application/application.module';
 import { MatchingModule } from './matching/matching.module';
 import { NotificationModule } from './notification/notification.module';
 import { StatsModule } from './stats/stats.module';
+import { CandidatesModule } from './candidates/candidates.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { StatsModule } from './stats/stats.module';
     MatchingModule,
     NotificationModule,
     StatsModule,
+    CandidatesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

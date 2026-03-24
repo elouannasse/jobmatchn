@@ -6,6 +6,10 @@ export class CreateApplicationDto {
   jobOfferId: string;
 
   @IsOptional()
+  @IsUUID()
+  candidateId?: string;
+
+  @IsOptional()
   @IsString()
   coverLetter?: string;
 }

@@ -42,4 +42,7 @@ export class CreateJobDto {
   @IsOptional()
   @IsString({ each: true })
   skills?: string[];
+
+  @IsOptional()
+  isPublished?: boolean;
 }

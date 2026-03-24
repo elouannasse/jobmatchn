@@ -40,14 +40,18 @@ model CandidateProfile {
 }
 
 model RecruiterProfile {
-  id          String     @id @default(uuid())
-  userId      String     @unique
-  companyId   String?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  offers      JobOffer[]
-  company     Company?   @relation(fields: [companyId], references: [id])
-  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String     @id @default(uuid())
+  userId         String     @unique
+  companyId      String?
+  isApproved     Boolean    @default(false)
+  approvedAt     DateTime?
+  rejectedReason String?
+  phone          String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  offers         JobOffer[]
+  company        Company?   @relation(fields: [companyId], references: [id])
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("recruiter_profiles")
 }
@@ -81,6 +85,10 @@ model JobOffer {
   salaryMax    Int?
   skills       String[]
   isPublished  Boolean          @default(false)
+  approvalStatus JobApprovalStatus @default(PENDING)
+  approvedAt     DateTime?
+  rejectedReason String?
+  approvedBy     String?
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
   applications Application[]
@@ -96,9 +104,11 @@ model Application {
   jobOfferId  String
   status      ApplicationStatus @default(PENDING)
   coverLetter String?
-  score       Int?
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  score            Int?
+  interviewDate    DateTime?
+  interviewMessage String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
   candidate   CandidateProfile  @relation(fields: [candidateId], references: [id], onDelete: Cascade)
   jobOffer    JobOffer          @relation(fields: [jobOfferId], references: [id], onDelete: Cascade)
 
@@ -109,6 +119,7 @@ model Application {
 enum Role {
   CANDIDATE
   RECRUITER
+  ADMIN
 }
 
 enum ContractType {
@@ -124,5 +135,11 @@ enum ApplicationStatus {
   REVIEWED
   INTERVIEW
   ACCEPTED
+  REJECTED
+}
+
+enum JobApprovalStatus {
+  PENDING
+  APPROVED
   REJECTED
 }

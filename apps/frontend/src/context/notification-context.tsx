@@ -25,7 +25,7 @@ interface NotificationContextType {
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3000";
+const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:4000";
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated } = useAuth();
@@ -39,6 +39,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     
     if (type === "application_status_updated") {
       message = `Le statut de votre candidature pour "${data.jobTitle}" a été mis à jour : ${data.status}`;
+    } else if (type === "JOB_APPROVED") {
+      message = data.message || `Votre offre "${data.jobTitle}" a été approuvée ✅`;
+    } else if (type === "JOB_REJECTED") {
+      message = data.message || `Votre offre "${data.jobTitle}" a été rejetée ❌`;
     }
 
     const newNotification: Notification = {
@@ -78,6 +82,12 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
     newSocket.on("application_status_updated", (data) => {
       addNotification("application_status_updated", data);
+    });
+
+    newSocket.on("notification", (data) => {
+      if (data.type) {
+        addNotification(data.type, data);
+      }
     });
 
     return () => {

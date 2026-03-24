@@ -11,16 +11,30 @@ export class StatsController {
   constructor(private readonly statsService: StatsService) {}
 
   @Get('global')
-  @Roles(UserRole.RECRUITER)
+  @Roles(UserRole.ADMIN)
   getGlobalStats() {
     return this.statsService.getGlobalStats();
+  }
+
+  @Get('growth')
+  @Roles(UserRole.ADMIN)
+  getGrowth() {
+    return this.statsService.getUserGrowth();
   }
 
   @Get('me')
   @Roles(UserRole.RECRUITER)
   getRecruiterStats(@Request() req: any) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    const userId = req.user.sub as string;
+    const userId = req.user.userId as string;
     return this.statsService.getRecruiterStats(userId);
+  }
+
+  @Get('me/candidate')
+  @Roles(UserRole.CANDIDATE)
+  getCandidateStats(@Request() req: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const userId = req.user.userId as string;
+    return this.statsService.getCandidateStats(userId);
   }
 }

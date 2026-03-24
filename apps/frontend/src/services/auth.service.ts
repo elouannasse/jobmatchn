@@ -1,14 +1,5 @@
-import axios from "axios";
+import api from "./api";
 import { RegisterInput, LoginInput } from "../lib/validations/auth.schema";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
-
-const api = axios.create({
-  baseURL: API_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
 
 export const authService = {
   async register(data: RegisterInput) {

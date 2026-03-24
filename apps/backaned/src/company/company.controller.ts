@@ -22,7 +22,7 @@ export class CompanyController {
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.RECRUITER)
+  @Roles(UserRole.RECRUITER, UserRole.ADMIN)
   create(@Body() dto: CreateCompanyDto) {
     return this.companyService.create(dto);
   }
@@ -39,14 +39,14 @@ export class CompanyController {
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.RECRUITER)
+  @Roles(UserRole.RECRUITER, UserRole.ADMIN)
   update(@Param('id') id: string, @Body() dto: UpdateCompanyDto) {
     return this.companyService.update(id, dto);
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.RECRUITER)
+  @Roles(UserRole.RECRUITER, UserRole.ADMIN)
   remove(@Param('id') id: string) {
     return this.companyService.remove(id);
   }

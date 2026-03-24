@@ -12,17 +12,36 @@ import {
   CheckCircle2,
   Clock,
   ArrowRight,
-  User as UserIcon
+  User as UserIcon,
+  Plus,
+  X,
+  Briefcase,
+  MapPin,
+  Loader2,
+  AlertCircle
 } from "lucide-react";
 import { KanbanBoard } from "@/components/dashboard/kanban-board";
 import { ApplicationTable } from "@/components/dashboard/application-table";
+import { CandidateProfileModal } from "@/components/dashboard/candidate-profile-modal";
+import { InterviewScheduleModal } from "@/components/dashboard/interview-schedule-modal";
 import { toast } from "sonner";
+import { jobService } from "@/services/job.service";
+import { companyService } from "@/services/company.service";
+import Link from "next/link";
 
 export default function RecruiterDashboard() {
   const [view, setView] = useState<"kanban" | "list">("kanban");
   const [applications, setApplications] = useState<RecruiterApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [companies, setCompanies] = useState<any[]>([]);
+  const [selectedApplication, setSelectedApplication] = useState<RecruiterApplication | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Interview modal states
+  const [isInterviewModalOpen, setIsInterviewModalOpen] = useState(false);
+  const [pendingInterviewChange, setPendingInterviewChange] = useState<{ id: string; status: string } | null>(null);
+  const [isScheduling, setIsScheduling] = useState(false);
 
   const loadApplications = async () => {
     setLoading(true);
@@ -38,18 +57,51 @@ export default function RecruiterDashboard() {
 
   useEffect(() => {
     loadApplications();
+    fetchCompanies();
   }, []);
 
-  const handleStatusUpdate = async (id: string, newStatus: string) => {
+  const fetchCompanies = async () => {
+    const data = await companyService.getAll();
+    setCompanies(data);
+  };
+
+  const handleStatusUpdate = async (id: string, newStatus: string, detail?: { date?: string; time?: string; message?: string }) => {
+    const previousApplications = [...applications];
+    const interviewDate = detail?.date && detail?.time ? `${detail.date}T${detail.time}:00` : undefined;
+    
+    // Optimistic Update
+    setApplications(prev => prev.map(app => 
+      app.id === id ? { ...app, status: newStatus, interviewDate, interviewMessage: detail?.message } : app
+    ));
+    setSelectedApplication(prev => prev && prev.id === id ? { ...prev, status: newStatus, interviewDate, interviewMessage: detail?.message } : prev);
+
     try {
-      await applicationService.updateStatus(id, newStatus);
-      setApplications(prev => prev.map(app => 
-        app.id === id ? { ...app, status: newStatus } : app
-      ));
-      toast.success("Statut mis à jour");
+      await applicationService.updateStatus(id, newStatus, interviewDate, detail?.message);
+      toast.success(newStatus === 'INTERVIEW' ? "Entretien planifié ✨" : "Statut mis à jour ✨");
+      setIsInterviewModalOpen(false);
+      setPendingInterviewChange(null);
     } catch (error) {
+      // Revert if error
+      setApplications(previousApplications);
+      setSelectedApplication(previousApplications.find(a => a.id === id) || null);
       toast.error("Échec de la mise à jour");
+    } finally {
+      setIsScheduling(false);
     }
+  };
+
+  const onStatusChangeRequest = (id: string, newStatus: string) => {
+    if (newStatus === "INTERVIEW") {
+      setPendingInterviewChange({ id, status: newStatus });
+      setIsInterviewModalOpen(true);
+    } else {
+      handleStatusUpdate(id, newStatus);
+    }
+  };
+
+  const handleCardClick = (app: RecruiterApplication) => {
+    setSelectedApplication(app);
+    setIsModalOpen(true);
   };
 
   const filteredApplications = applications.filter(app => {
@@ -96,6 +148,14 @@ export default function RecruiterDashboard() {
                 <List className="w-4 h-4" /> Liste
               </button>
             </div>
+
+            <Link
+              href="/dashboard/recruiter/offres/create"
+              className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black uppercase tracking-widest text-xs transition-all shadow-lg shadow-blue-500/20 hover:scale-105 active:scale-95"
+            >
+              <Plus className="w-4 h-4" />
+              Créer une Offre
+            </Link>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -155,7 +215,8 @@ export default function RecruiterDashboard() {
             >
               <KanbanBoard 
                 applications={filteredApplications} 
-                onStatusChange={handleStatusUpdate}
+                onStatusChange={onStatusChangeRequest}
+                onCardClick={handleCardClick}
                 loading={loading}
               />
             </motion.div>
@@ -176,6 +237,33 @@ export default function RecruiterDashboard() {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Candidate Profile Modal */}
+      <CandidateProfileModal
+        application={selectedApplication}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onStatusChange={onStatusChangeRequest}
+      />
+
+      {/* Interview Schedule Modal */}
+      <InterviewScheduleModal
+        isOpen={isInterviewModalOpen}
+        onClose={() => setIsInterviewModalOpen(false)}
+        onConfirm={(date, time, message) => {
+          if (pendingInterviewChange) {
+            setIsScheduling(true);
+            handleStatusUpdate(pendingInterviewChange.id, pendingInterviewChange.status, { date, time, message });
+          }
+        }}
+        loading={isScheduling}
+        candidateName={
+          (() => {
+            const app = applications.find(a => a.id === pendingInterviewChange?.id);
+            return app ? `${app.candidate.user.firstName} ${app.candidate.user.lastName}` : "";
+          })()
+        }
+      />
     </div>
   );
 }

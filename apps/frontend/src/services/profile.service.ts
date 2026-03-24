@@ -1,39 +1,50 @@
-import axios from "axios";
-import Cookies from "js-cookie";
-import { CandidateProfileInput, RecruiterOnboardingInput } from "../lib/validations/profile.schema";
+import api from "./api";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
-
-const api = axios.create({
-  baseURL: API_URL,
-});
-
-api.interceptors.request.use((config) => {
-  const token = Cookies.get("accessToken");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+export interface UserProfile {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  candidateProfile?: any;
+  recruiterProfile?: {
+    id: string;
+    companyId: string;
+    company?: {
+      id: string;
+      name: string;
+      logoUrl: string;
+      description: string;
+      industry: string;
+      location: string;
+    }
   }
-  return config;
-});
+}
 
 export const profileService = {
-  async updateCandidateProfile(data: CandidateProfileInput) {
-    const response = await api.patch("/profiles/candidate", data);
+  async getProfile(): Promise<UserProfile> {
+    const response = await api.get("/profile");
     return response.data;
   },
 
-  async createCompany(data: RecruiterOnboardingInput) {
-    const response = await api.post("/companies", data);
+  async updateProfile(data: any): Promise<UserProfile> {
+    const response = await api.put("/profile", data);
     return response.data;
   },
 
-  async getMyProfile() {
+  async uploadLogo(file: File): Promise<UserProfile> {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await api.post("/profile/logo", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  },
+
+  async getMyAuth() {
     const response = await api.get("/auth/me");
-    return response.data;
-  },
-
-  async getPublicCompany(id: string) {
-    const response = await api.get(`/companies/${id}`);
     return response.data;
   }
 };

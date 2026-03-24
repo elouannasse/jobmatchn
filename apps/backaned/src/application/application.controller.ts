@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Patch,
@@ -38,11 +39,23 @@ export class ApplicationController {
   }
 
   @Get('recruiter')
-  @Roles(UserRole.RECRUITER)
+  @Roles(UserRole.RECRUITER, UserRole.ADMIN)
   findForRecruiter(@Request() req: any) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     const userId = req.user.userId as string;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const isAdmin = req.user.role === UserRole.ADMIN;
+    
+    if (isAdmin) {
+      return this.applicationService.findAll();
+    }
     return this.applicationService.findAllForRecruiter(userId);
+  }
+
+  @Get('admin')
+  @Roles(UserRole.ADMIN)
+  findAll() {
+    return this.applicationService.findAll();
   }
 
   @Get('job/:jobId')
@@ -54,7 +67,7 @@ export class ApplicationController {
   }
 
   @Patch(':id/status')
-  @Roles(UserRole.RECRUITER)
+  @Roles(UserRole.RECRUITER, UserRole.ADMIN)
   updateStatus(
     @Param('id') id: string,
     @Request() req: any,
@@ -62,6 +75,18 @@ export class ApplicationController {
   ) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     const userId = req.user.userId as string;
-    return this.applicationService.updateStatus(id, userId, dto);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const isAdmin = req.user.role === UserRole.ADMIN;
+    return this.applicationService.updateStatus(id, userId, dto, isAdmin);
+  }
+
+  @Delete(':id')
+  @Roles(UserRole.RECRUITER, UserRole.ADMIN)
+  remove(@Param('id') id: string, @Request() req: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const userId = req.user.userId as string;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const isAdmin = req.user.role === UserRole.ADMIN;
+    return this.applicationService.remove(id, userId, isAdmin);
   }
 }

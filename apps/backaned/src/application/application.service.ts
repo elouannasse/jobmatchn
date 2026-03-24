@@ -18,10 +18,20 @@ export class ApplicationService {
     private notificationGateway: NotificationGateway,
   ) {}
 
-  async create(userId: string, dto: CreateApplicationDto) {
-    const candidate = await this.prisma.candidateProfile.findUnique({
-      where: { userId },
-    });
+  async create(userId: string, dto: CreateApplicationDto, requesterRole?: string) {
+    let candidate;
+
+    if (requesterRole === 'ADMIN' && dto.candidateId) {
+      candidate = await this.prisma.candidateProfile.findUnique({
+        where: { id: dto.candidateId },
+        include: { user: true },
+      });
+    } else {
+      candidate = await this.prisma.candidateProfile.findUnique({
+        where: { userId },
+        include: { user: true },
+      });
+    }
 
     if (!candidate) {
       throw new ForbiddenException('Profil candidat non trouvé');
@@ -37,9 +47,9 @@ export class ApplicationService {
     }
 
     // Calcul du score de compatibilité
-    const score = this.matchingService.calculateScore(
-      candidate.skills,
-      jobOffer.skills,
+    const score = this.matchingService.calculateComprehensiveScore(
+      candidate,
+      jobOffer,
     );
 
     // Vérifier si le candidat a déjà postulé
@@ -89,6 +99,7 @@ export class ApplicationService {
 
     return this.prisma.application.findMany({
       where: { candidateId: candidate.id },
+      orderBy: { createdAt: 'desc' },
       include: {
         jobOffer: {
           include: {
@@ -173,6 +184,7 @@ export class ApplicationService {
     applicationId: string,
     recruiterUserId: string,
     dto: UpdateApplicationStatusDto,
+    isAdmin = false,
   ) {
     const application = await this.prisma.application.findUnique({
       where: { id: applicationId },
@@ -186,20 +198,34 @@ export class ApplicationService {
       throw new NotFoundException('Candidature non trouvée');
     }
 
-    if (application.jobOffer.recruiter.userId !== recruiterUserId) {
+    if (!isAdmin && application.jobOffer.recruiter.userId !== recruiterUserId) {
       throw new ForbiddenException(
         "Vous n'êtes pas autorisé à modifier cette candidature",
       );
     }
 
+    const updateData: any = { 
+      status: dto.status,
+      interviewDate: dto.interviewDate ? new Date(dto.interviewDate) : undefined,
+      interviewMessage: dto.interviewMessage,
+    };
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const updatedApplication = await this.prisma.application.update({
       where: { id: applicationId },
-      data: { status: dto.status },
-    });
+      data: updateData,
+    }) as any;
 
     // Envoyer une notification en temps réel au candidat
     const candidate = application.candidate as { userId: string } | null;
     if (candidate) {
+      let message = `Le statut de votre candidature pour "${application.jobOffer.title}" est passé à ${updatedApplication.status}.`;
+      
+      if (dto.status === 'INTERVIEW' && dto.interviewDate) {
+        const date = new Date(dto.interviewDate);
+        message = `Vous avez un entretien pour "${application.jobOffer.title}" le ${date.toLocaleDateString('fr-FR')} à ${date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}.`;
+      }
+
       this.notificationGateway.sendToUser(
         candidate.userId,
         'application_status_updated',
@@ -207,10 +233,56 @@ export class ApplicationService {
           applicationId: updatedApplication.id,
           status: updatedApplication.status,
           jobTitle: application.jobOffer.title,
+          message,
+          interviewDate: updatedApplication.interviewDate,
+          interviewMessage: updatedApplication.interviewMessage,
         },
       );
     }
 
     return updatedApplication;
+  }
+
+  async findAll() {
+    return this.prisma.application.findMany({
+      include: {
+        jobOffer: {
+          include: {
+            company: { select: { name: true, logoUrl: true } },
+          },
+        },
+        candidate: {
+          include: {
+            user: {
+              select: { firstName: true, lastName: true, email: true },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async remove(id: string, recruiterUserId: string, isAdmin = false) {
+    const application = await this.prisma.application.findUnique({
+      where: { id },
+      include: {
+        jobOffer: { include: { recruiter: true } },
+      },
+    });
+
+    if (!application) {
+      throw new NotFoundException('Candidature non trouvée');
+    }
+
+    if (!isAdmin && application.jobOffer.recruiter.userId !== recruiterUserId) {
+      throw new ForbiddenException(
+        "Vous n'êtes pas autorisé à supprimer cette candidature",
+      );
+    }
+
+    return this.prisma.application.delete({
+      where: { id },
+    });
   }
 }

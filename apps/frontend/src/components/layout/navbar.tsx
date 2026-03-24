@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
 import { motion } from "framer-motion";
-import { LogOut, LayoutDashboard, Sparkles, Building2, Search } from "lucide-react";
+import { LogOut, LayoutDashboard, Sparkles, Building2, Search, Briefcase, History as HistoryIcon, User as UserIcon } from "lucide-react";
 import { NotificationCenter } from "../notifications/notification-center";
 
 export function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-[100] px-6 py-4">
+    <nav className="fixed top-0 left-0 right-0 z-[1000] px-6 py-4">
       <div className="max-w-7xl mx-auto">
         <div className="glass border border-white/10 rounded-[32px] px-8 py-4 flex items-center justify-between shadow-2xl backdrop-blur-3xl">
           {/* Logo */}
@@ -31,15 +31,33 @@ export function Navbar() {
             {isAuthenticated && (
               <>
                 <Link 
-                  href={user?.role === "RECRUITER" ? "/dashboard/recruiter" : "/dashboard/candidate"} 
+                  href={user?.role === "RECRUITER" ? "/dashboard/recruiter" : user?.role === "ADMIN" ? "/dashboard/admin" : "/dashboard/candidat"} 
                   className="text-sm font-bold text-muted-foreground hover:text-white transition-colors flex items-center gap-2"
                 >
                   <LayoutDashboard className="w-4 h-4" /> Dashboard
                 </Link>
+                {user?.role === "CANDIDATE" && (
+                  <>
+                    <Link href="/dashboard/candidat/offres" className="text-sm font-bold text-muted-foreground hover:text-white transition-colors flex items-center gap-2">
+                      <Briefcase className="w-4 h-4" /> Offres
+                    </Link>
+                    <Link href="/dashboard/candidat/candidatures" className="text-sm font-bold text-muted-foreground hover:text-white transition-colors flex items-center gap-2">
+                      <HistoryIcon className="w-4 h-4" /> Candidatures
+                    </Link>
+                    <Link href="/dashboard/candidat/profil" className="text-sm font-bold text-muted-foreground hover:text-white transition-colors flex items-center gap-2">
+                      <UserIcon className="w-4 h-4" /> Profil
+                    </Link>
+                  </>
+                )}
                 {user?.role === "RECRUITER" && (
-                  <Link href="/companies/me" className="text-sm font-bold text-muted-foreground hover:text-white transition-colors flex items-center gap-2">
-                    <Building2 className="w-4 h-4" /> Entreprise
-                  </Link>
+                  <>
+                    <Link href="/dashboard/recruiter/offres" className="text-sm font-bold text-muted-foreground hover:text-white transition-colors flex items-center gap-2">
+                      <Briefcase className="w-4 h-4" /> Mes Offres
+                    </Link>
+                    <Link href="/companies/me" className="text-sm font-bold text-muted-foreground hover:text-white transition-colors flex items-center gap-2">
+                      <Building2 className="w-4 h-4" /> Entreprise
+                    </Link>
+                  </>
                 )}
               </>
             )}
@@ -54,7 +72,9 @@ export function Navbar() {
                 <div className="flex items-center gap-4">
                   <div className="hidden lg:block text-right">
                     <p className="text-sm font-bold truncate max-w-[150px]">{user?.email}</p>
-                    <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">{user?.role === "RECRUITER" ? "Recruteur" : "Candidat"}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">
+                      {user?.role === "ADMIN" ? "Admin" : user?.role === "RECRUITER" ? "Recruteur" : user?.role === "CANDIDATE" ? "Candidat" : "Utilisateur"}
+                    </p>
                   </div>
                   <button
                     onClick={logout}

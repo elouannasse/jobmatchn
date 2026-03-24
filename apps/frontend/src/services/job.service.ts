@@ -1,19 +1,4 @@
-import axios from "axios";
-import Cookies from "js-cookie";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
-
-const api = axios.create({
-  baseURL: API_URL,
-});
-
-api.interceptors.request.use((config) => {
-  const token = Cookies.get("accessToken");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+import api from "./api";
 
 export interface JobSearchFilters {
   title?: string;
@@ -25,17 +10,41 @@ export interface JobSearchFilters {
 
 export const jobService = {
   async getJobs(filters: JobSearchFilters = {}) {
-    // Filter out undefined/empty values
     const params = Object.fromEntries(
       Object.entries(filters).filter(([, v]) => v !== undefined && v !== "" && (Array.isArray(v) ? v.length > 0 : true))
     );
 
     const response = await api.get("/jobs", { params });
-    return response.data;
+    return Array.isArray(response.data) ? response.data : [];
+  },
+
+  async getAllJobsAdmin() {
+    const response = await api.get("/jobs/admin");
+    return Array.isArray(response.data) ? response.data : [];
+  },
+
+  async getRecruiterJobs() {
+    const response = await api.get("/jobs/recruiter");
+    return Array.isArray(response.data) ? response.data : [];
   },
 
   async getJobById(id: string) {
     const response = await api.get(`/jobs/${id}`);
+    return response.data;
+  },
+
+  async createJob(data: any) {
+    const response = await api.post("/jobs", data);
+    return response.data;
+  },
+
+  async updateJob(id: string, data: any) {
+    const response = await api.patch(`/jobs/${id}`, data);
+    return response.data;
+  },
+
+  async deleteJob(id: string) {
+    const response = await api.delete(`/jobs/${id}`);
     return response.data;
   }
 };

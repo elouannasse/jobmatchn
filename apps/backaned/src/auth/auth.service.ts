@@ -23,6 +23,7 @@ export class AuthService {
 
     const user = await this.prisma.user.findUnique({
       where: { email },
+      include: { recruiterProfile: true },
     });
 
     if (!user) {
@@ -38,7 +39,13 @@ export class AuthService {
       throw new UnauthorizedException('Identifiants invalides');
     }
 
-    const payload = { sub: user.id, email: user.email, role: user.role };
+    const payload = { 
+      sub: user.id, 
+      email: user.email, 
+      role: user.role,
+      // @ts-ignore
+      isApproved: user.role === 'RECRUITER' ? user.recruiterProfile?.isApproved : true
+    };
 
     return {
       accessToken: await this.jwtService.signAsync(payload),
@@ -83,6 +90,8 @@ export class AuthService {
         await tx.recruiterProfile.create({
           data: {
             userId: user.id,
+            // @ts-ignore
+            isApproved: false,
           },
         });
       }

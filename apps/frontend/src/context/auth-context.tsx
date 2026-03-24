@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 interface User {
   id: string;
   email: string;
-  role: "CANDIDATE" | "RECRUITER";
+  role: "CANDIDATE" | "RECRUITER" | "ADMIN";
 }
 
 interface AuthContextType {
@@ -24,7 +24,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 interface DecodedToken {
   sub: string;
   email: string;
-  role: "CANDIDATE" | "RECRUITER";
+  role: "CANDIDATE" | "RECRUITER" | "ADMIN";
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -59,7 +59,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       role: decoded.role,
     });
     
-    if (decoded.role === "RECRUITER") {
+    if (decoded.role === "ADMIN") {
+      router.push("/dashboard/admin");
+    } else if (decoded.role === "RECRUITER") {
       router.push("/dashboard/recruiter");
     } else {
       router.push("/dashboard/candidate");

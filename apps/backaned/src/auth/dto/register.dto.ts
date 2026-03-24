@@ -9,6 +9,7 @@ import {
 export enum UserRole {
   CANDIDATE = 'CANDIDATE',
   RECRUITER = 'RECRUITER',
+  ADMIN = 'ADMIN',
 }
 
 export class RegisterDto {

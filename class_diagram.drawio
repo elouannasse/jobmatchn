@@ -1,0 +1,214 @@
+<mxfile host="65bd71144e">
+    <diagram name="JobMatchN Class Diagram" id="jobmatchn-class-diagram">
+        <mxGraphModel dx="1956" dy="623" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3300" pageHeight="2400" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="user" value="&lt;b&gt;User&lt;/b&gt;&lt;hr&gt;+ id: String (UUID)&lt;br&gt;+ email: String (unique)&lt;br&gt;+ password: String&lt;br&gt;+ firstName: String&lt;br&gt;+ lastName: String&lt;br&gt;+ role: Role&lt;br&gt;+ createdAt: DateTime&lt;br&gt;+ updatedAt: DateTime&lt;br&gt;+ candidateProfile: CandidateProfile?&lt;br&gt;+ recruiterProfile: RecruiterProfile?" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                    <mxGeometry x="460" y="70" width="280" height="200" as="geometry"/>
+                </mxCell>
+                <mxCell id="candidateProfile" value="&lt;b&gt;CandidateProfile&lt;/b&gt;&lt;hr&gt;+ id: String (UUID)&lt;br&gt;+ userId: String (unique)&lt;br&gt;+ title: String?&lt;br&gt;+ summary: String?&lt;br&gt;+ location: String?&lt;br&gt;+ skills: String[]&lt;br&gt;+ linkedinUrl: String?&lt;br&gt;+ cvUrl: String?&lt;br&gt;+ createdAt: DateTime&lt;br&gt;+ updatedAt: DateTime&lt;br&gt;+ applications: Application[]" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                    <mxGeometry x="200" y="360" width="280" height="230" as="geometry"/>
+                </mxCell>
+                <mxCell id="recruiterProfile" value="&lt;b&gt;RecruiterProfile&lt;/b&gt;&lt;hr&gt;+ id: String (UUID)&lt;br&gt;+ userId: String (unique)&lt;br&gt;+ companyId: String?&lt;br&gt;+ isApproved: Boolean&lt;br&gt;+ approvedAt: DateTime?&lt;br&gt;+ rejectedReason: String?&lt;br&gt;+ phone: String?&lt;br&gt;+ createdAt: DateTime&lt;br&gt;+ updatedAt: DateTime&lt;br&gt;+ offers: JobOffer[]" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                    <mxGeometry x="1000" y="360" width="280" height="220" as="geometry"/>
+                </mxCell>
+                <mxCell id="company" value="&lt;b&gt;Company&lt;/b&gt;&lt;hr&gt;+ id: String (UUID)&lt;br&gt;+ name: String&lt;br&gt;+ logoUrl: String?&lt;br&gt;+ description: String?&lt;br&gt;+ website: String?&lt;br&gt;+ location: String?&lt;br&gt;+ industry: String?&lt;br&gt;+ size: String?&lt;br&gt;+ recruiters: RecruiterProfile[]&lt;br&gt;+ jobs: JobOffer[]&lt;br&gt;+ createdAt: DateTime&lt;br&gt;+ updatedAt: DateTime" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                    <mxGeometry x="1400" y="360" width="280" height="250" as="geometry"/>
+                </mxCell>
+                <mxCell id="jobOffer" value="&lt;b&gt;JobOffer&lt;/b&gt;&lt;hr&gt;+ id: String (UUID)&lt;br&gt;+ recruiterId: String&lt;br&gt;+ companyId: String&lt;br&gt;+ title: String&lt;br&gt;+ description: String&lt;br&gt;+ location: String&lt;br&gt;+ contractType: ContractType&lt;br&gt;+ salaryMin: Int?&lt;br&gt;+ salaryMax: Int?&lt;br&gt;+ skills: String[]&lt;br&gt;+ isPublished: Boolean&lt;br&gt;+ approvalStatus: JobApprovalStatus&lt;br&gt;+ approvedAt: DateTime?&lt;br&gt;+ rejectedReason: String?&lt;br&gt;+ approvedBy: String?&lt;br&gt;+ createdAt: DateTime&lt;br&gt;+ updatedAt: DateTime&lt;br&gt;+ applications: Application[]" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                    <mxGeometry x="620" y="675" width="280" height="360" as="geometry"/>
+                </mxCell>
+                <mxCell id="application" value="&lt;b&gt;Application&lt;/b&gt;&lt;hr&gt;+ id: String (UUID)&lt;br&gt;+ candidateId: String&lt;br&gt;+ jobOfferId: String&lt;br&gt;+ status: ApplicationStatus&lt;br&gt;+ coverLetter: String?&lt;br&gt;+ score: Int?&lt;br&gt;+ createdAt: DateTime&lt;br&gt;+ updatedAt: DateTime&lt;br&gt;&lt;hr&gt;@@unique([candidateId, jobOfferId])" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+                    <mxGeometry x="200" y="750" width="280" height="210" as="geometry"/>
+                </mxCell>
+                <mxCell id="enumRole" value="&lt;b&gt;&amp;lt;&amp;lt;enum&amp;gt;&amp;gt;&lt;br&gt;Role&lt;/b&gt;&lt;hr&gt;CANDIDATE&lt;br&gt;RECRUITER&lt;br&gt;ADMIN" style="rounded=0;whiteSpace=wrap;html=1;align=center;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
+                    <mxGeometry x="1070" y="30" width="150" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="authService" value="&lt;b&gt;&amp;lt;&amp;lt;Service&amp;gt;&amp;gt;&lt;br&gt;AuthService&lt;/b&gt;&lt;hr&gt;- prisma: PrismaService&lt;br&gt;- hashingService: HashingService&lt;br&gt;- jwtService: JwtService&lt;hr&gt;+ login(dto: LoginDto): Promise&lt;br&gt;+ register(dto: RegisterDto): Promise" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+                    <mxGeometry x="1800" y="60" width="280" height="170" as="geometry"/>
+                </mxCell>
+                <mxCell id="hashingService" value="&lt;b&gt;&amp;lt;&amp;lt;Service&amp;gt;&amp;gt;&lt;br&gt;HashingService&lt;/b&gt;&lt;hr&gt;+ hash(password: String): Promise&lt;br&gt;+ compare(password, hash): Promise" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+                    <mxGeometry x="2140" y="60" width="260" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="prismaService" value="&lt;b&gt;&amp;lt;&amp;lt;Service&amp;gt;&amp;gt;&lt;br&gt;PrismaService&lt;/b&gt;&lt;hr&gt;extends PrismaClient&lt;br&gt;implements OnModuleInit&lt;hr&gt;+ onModuleInit(): Promise" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+                    <mxGeometry x="2460" y="60" width="240" height="130" as="geometry"/>
+                </mxCell>
+                <mxCell id="candidatesService" value="&lt;b&gt;&amp;lt;&amp;lt;Service&amp;gt;&amp;gt;&lt;br&gt;CandidatesService&lt;/b&gt;&lt;hr&gt;- prisma: PrismaService&lt;hr&gt;+ findAll(): Promise&lt;br&gt;+ findOne(id): Promise&lt;br&gt;+ create(dto): Promise&lt;br&gt;+ update(id, dto): Promise&lt;br&gt;+ remove(id): Promise" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+                    <mxGeometry x="1800" y="280" width="260" height="180" as="geometry"/>
+                </mxCell>
+                <mxCell id="companyService" value="&lt;b&gt;&amp;lt;&amp;lt;Service&amp;gt;&amp;gt;&lt;br&gt;CompanyService&lt;/b&gt;&lt;hr&gt;- prisma: PrismaService&lt;hr&gt;+ create(dto): Promise&lt;br&gt;+ findAll(): Promise&lt;br&gt;+ findOne(id): Promise&lt;br&gt;+ update(id, dto): Promise&lt;br&gt;+ remove(id): Promise" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+                    <mxGeometry x="2120" y="280" width="260" height="180" as="geometry"/>
+                </mxCell>
+                <mxCell id="jobService" value="&lt;b&gt;&amp;lt;&amp;lt;Service&amp;gt;&amp;gt;&lt;br&gt;JobService&lt;/b&gt;&lt;hr&gt;- prisma: PrismaService&lt;br&gt;- matchingService: MatchingService&lt;br&gt;- notificationGateway: NotificationGateway&lt;hr&gt;+ create(userId, dto, role?): Promise&lt;br&gt;+ findAll(query, userId?): Promise&lt;br&gt;+ findOne(id): Promise&lt;br&gt;+ update(id, userId, dto, isAdmin): Promise&lt;br&gt;+ remove(id, userId, isAdmin): Promise&lt;br&gt;+ findAllAdmin(): Promise&lt;br&gt;+ findAllForRecruiter(userId): Promise&lt;br&gt;+ findPendingAdmin(): Promise&lt;br&gt;+ approve(id, adminId): Promise&lt;br&gt;+ reject(id, reason): Promise" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+                    <mxGeometry x="1800" y="510" width="310" height="280" as="geometry"/>
+                </mxCell>
+                <mxCell id="applicationService" value="&lt;b&gt;&amp;lt;&amp;lt;Service&amp;gt;&amp;gt;&lt;br&gt;ApplicationService&lt;/b&gt;&lt;hr&gt;- prisma: PrismaService&lt;br&gt;- matchingService: MatchingService&lt;br&gt;- notificationGateway: NotificationGateway&lt;hr&gt;+ create(userId, dto, role?): Promise&lt;br&gt;+ findMyApplications(userId): Promise&lt;br&gt;+ findAllForRecruiter(userId): Promise&lt;br&gt;+ findByJob(jobId, userId): Promise&lt;br&gt;+ updateStatus(id, userId, dto, isAdmin): Promise&lt;br&gt;+ findAll(): Promise&lt;br&gt;+ remove(id, userId, isAdmin): Promise" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+                    <mxGeometry x="2160" y="510" width="320" height="260" as="geometry"/>
+                </mxCell>
+                <mxCell id="matchingService" value="&lt;b&gt;&amp;lt;&amp;lt;Service&amp;gt;&amp;gt;&lt;br&gt;MatchingService&lt;/b&gt;&lt;hr&gt;+ calculateScore(candidateSkills, jobSkills): number&lt;br&gt;+ getMatchedSkills(candidateSkills, jobSkills): string[]" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+                    <mxGeometry x="2540" y="510" width="320" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="matchingCronService" value="&lt;b&gt;&amp;lt;&amp;lt;Service&amp;gt;&amp;gt;&lt;br&gt;MatchingCronService&lt;/b&gt;&lt;hr&gt;- prisma: PrismaService&lt;br&gt;- matchingService: MatchingService&lt;hr&gt;+ handleScoreRecalculation(): Promise (CRON)" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+                    <mxGeometry x="2540" y="660" width="320" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="profileService" value="&lt;b&gt;&amp;lt;&amp;lt;Service&amp;gt;&amp;gt;&lt;br&gt;ProfileService&lt;/b&gt;&lt;hr&gt;- prisma: PrismaService&lt;hr&gt;+ getProfile(userId): Promise&lt;br&gt;+ updateProfile(userId, dto): Promise" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+                    <mxGeometry x="1800" y="840" width="260" height="130" as="geometry"/>
+                </mxCell>
+                <mxCell id="candidateProfileService" value="&lt;b&gt;&amp;lt;&amp;lt;Service&amp;gt;&amp;gt;&lt;br&gt;CandidateProfileService&lt;/b&gt;&lt;hr&gt;- prisma: PrismaService&lt;hr&gt;+ getProfile(userId): Promise&lt;br&gt;+ updateProfile(userId, dto): Promise" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+                    <mxGeometry x="2120" y="840" width="260" height="130" as="geometry"/>
+                </mxCell>
+                <mxCell id="statsService" value="&lt;b&gt;&amp;lt;&amp;lt;Service&amp;gt;&amp;gt;&lt;br&gt;StatsService&lt;/b&gt;&lt;hr&gt;- prisma: PrismaService&lt;hr&gt;+ getGlobalStats(): Promise&lt;br&gt;+ getUserGrowth(): Promise&lt;br&gt;+ getRecruiterStats(userId): Promise&lt;br&gt;+ getCandidateStats(userId): Promise" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+                    <mxGeometry x="2440" y="840" width="280" height="160" as="geometry"/>
+                </mxCell>
+                <mxCell id="uploadService" value="&lt;b&gt;&amp;lt;&amp;lt;Service&amp;gt;&amp;gt;&lt;br&gt;UploadService&lt;/b&gt;&lt;hr&gt;+ uploadFile(file, folder): Promise" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+                    <mxGeometry x="2780" y="840" width="250" height="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="notificationGateway" value="&lt;b&gt;&amp;lt;&amp;lt;Gateway&amp;gt;&amp;gt;&lt;br&gt;NotificationGateway&lt;/b&gt;&lt;hr&gt;- server: Server&lt;br&gt;- jwtService: JwtService&lt;br&gt;- configService: ConfigService&lt;hr&gt;+ handleConnection(client): Promise&lt;br&gt;+ handleDisconnect(client): void&lt;br&gt;+ sendToUser(userId, event, data): void&lt;br&gt;+ sendToAll(event, data): void" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#e1d5e7;strokeColor=#9673a6;" parent="1" vertex="1">
+                    <mxGeometry x="2540" y="280" width="290" height="190" as="geometry"/>
+                </mxCell>
+                <mxCell id="authController" value="&lt;b&gt;&amp;lt;&amp;lt;Controller&amp;gt;&amp;gt;&lt;br&gt;AuthController&lt;/b&gt;&lt;hr&gt;Route: /auth&lt;hr&gt;+ register(dto): POST&lt;br&gt;+ login(dto): POST&lt;br&gt;+ getProfile(req): GET /me" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
+                    <mxGeometry x="1800" y="1060" width="220" height="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="usersController" value="&lt;b&gt;&amp;lt;&amp;lt;Controller&amp;gt;&amp;gt;&lt;br&gt;UsersController&lt;/b&gt;&lt;hr&gt;Route: /users (ADMIN)&lt;hr&gt;+ create(dto): POST&lt;br&gt;+ findAll(role?, isApproved?): GET&lt;br&gt;+ update(id, dto): PATCH&lt;br&gt;+ approve(id): PATCH /approve&lt;br&gt;+ reject(id, reason): PATCH /reject" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
+                    <mxGeometry x="2060" y="1060" width="260" height="170" as="geometry"/>
+                </mxCell>
+                <mxCell id="candidatesController" value="&lt;b&gt;&amp;lt;&amp;lt;Controller&amp;gt;&amp;gt;&lt;br&gt;CandidatesController&lt;/b&gt;&lt;hr&gt;Route: /candidates&lt;hr&gt;+ findAll(): GET&lt;br&gt;+ findOne(id): GET&lt;br&gt;+ create(dto): POST&lt;br&gt;+ update(id, dto): PUT&lt;br&gt;+ remove(id): DELETE" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
+                    <mxGeometry x="2360" y="1060" width="230" height="170" as="geometry"/>
+                </mxCell>
+                <mxCell id="companyController" value="&lt;b&gt;&amp;lt;&amp;lt;Controller&amp;gt;&amp;gt;&lt;br&gt;CompanyController&lt;/b&gt;&lt;hr&gt;Route: /companies&lt;hr&gt;+ create(dto): POST&lt;br&gt;+ findAll(): GET&lt;br&gt;+ findOne(id): GET&lt;br&gt;+ update(id, dto): PATCH&lt;br&gt;+ remove(id): DELETE" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
+                    <mxGeometry x="2630" y="1060" width="230" height="170" as="geometry"/>
+                </mxCell>
+                <mxCell id="jobController" value="&lt;b&gt;&amp;lt;&amp;lt;Controller&amp;gt;&amp;gt;&lt;br&gt;JobController&lt;/b&gt;&lt;hr&gt;Route: /jobs&lt;hr&gt;+ create(req, dto): POST&lt;br&gt;+ findAll(query, req): GET&lt;br&gt;+ findAllAdmin(): GET /admin&lt;br&gt;+ findAllForRecruiter(req): GET /recruiter&lt;br&gt;+ findOne(id): GET /:id&lt;br&gt;+ update(id, req, dto): PATCH&lt;br&gt;+ remove(id, req): DELETE" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
+                    <mxGeometry x="1800" y="1280" width="260" height="200" as="geometry"/>
+                </mxCell>
+                <mxCell id="adminJobController" value="&lt;b&gt;&amp;lt;&amp;lt;Controller&amp;gt;&amp;gt;&lt;br&gt;AdminJobController&lt;/b&gt;&lt;hr&gt;Route: /admin/jobs (ADMIN)&lt;hr&gt;+ getPendingJobs(): GET /pending&lt;br&gt;+ approveJob(id, req): PATCH /approve&lt;br&gt;+ rejectJob(id, reason): PATCH /reject" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
+                    <mxGeometry x="2100" y="1280" width="270" height="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="applicationController" value="&lt;b&gt;&amp;lt;&amp;lt;Controller&amp;gt;&amp;gt;&lt;br&gt;ApplicationController&lt;/b&gt;&lt;hr&gt;Route: /applications&lt;hr&gt;+ create(req, dto): POST&lt;br&gt;+ findMyApplications(req): GET /my&lt;br&gt;+ findForRecruiter(req): GET /recruiter&lt;br&gt;+ findAll(): GET /admin&lt;br&gt;+ findByJob(jobId, req): GET /job/:id&lt;br&gt;+ updateStatus(id, req, dto): PATCH&lt;br&gt;+ remove(id, req): DELETE" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
+                    <mxGeometry x="2410" y="1280" width="280" height="200" as="geometry"/>
+                </mxCell>
+                <mxCell id="profileController" value="&lt;b&gt;&amp;lt;&amp;lt;Controller&amp;gt;&amp;gt;&lt;br&gt;ProfileController&lt;/b&gt;&lt;hr&gt;Route: /profile&lt;hr&gt;+ getProfile(req): GET&lt;br&gt;+ updateProfile(req, dto): PUT&lt;br&gt;+ uploadLogo(req, file): POST /logo" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
+                    <mxGeometry x="2730" y="1280" width="250" height="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="candidateProfileController" value="&lt;b&gt;&amp;lt;&amp;lt;Controller&amp;gt;&amp;gt;&lt;br&gt;CandidateProfileController&lt;/b&gt;&lt;hr&gt;Route: /profile/candidate&lt;hr&gt;+ getProfile(req): GET /me&lt;br&gt;+ updateProfile(req, dto): PATCH /me&lt;br&gt;+ uploadCv(req, file): POST /upload-cv" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
+                    <mxGeometry x="2730" y="1450" width="270" height="140" as="geometry"/>
+                </mxCell>
+                <mxCell id="statsController" value="&lt;b&gt;&amp;lt;&amp;lt;Controller&amp;gt;&amp;gt;&lt;br&gt;StatsController&lt;/b&gt;&lt;hr&gt;Route: /stats&lt;hr&gt;+ getGlobalStats(): GET /global&lt;br&gt;+ getGrowth(): GET /growth&lt;br&gt;+ getRecruiterStats(req): GET /me&lt;br&gt;+ getCandidateStats(req): GET /me/candidate" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
+                    <mxGeometry x="1800" y="1530" width="280" height="150" as="geometry"/>
+                </mxCell>
+                <mxCell id="jwtAuthGuard" value="&lt;b&gt;&amp;lt;&amp;lt;Guard&amp;gt;&amp;gt;&lt;br&gt;JwtAuthGuard&lt;/b&gt;&lt;hr&gt;extends AuthGuard('jwt')" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" parent="1" vertex="1">
+                    <mxGeometry x="200" y="1120" width="200" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="optJwtGuard" value="&lt;b&gt;&amp;lt;&amp;lt;Guard&amp;gt;&amp;gt;&lt;br&gt;OptionalJwtAuthGuard&lt;/b&gt;&lt;hr&gt;extends AuthGuard('jwt')&lt;hr&gt;+ handleRequest(err, user, info, ctx)" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" parent="1" vertex="1">
+                    <mxGeometry x="430" y="1110" width="250" height="110" as="geometry"/>
+                </mxCell>
+                <mxCell id="rolesGuard" value="&lt;b&gt;&amp;lt;&amp;lt;Guard&amp;gt;&amp;gt;&lt;br&gt;RolesGuard&lt;/b&gt;&lt;hr&gt;implements CanActivate&lt;br&gt;- reflector: Reflector&lt;hr&gt;+ canActivate(context): boolean" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" parent="1" vertex="1">
+                    <mxGeometry x="730" y="1120" width="240" height="120" as="geometry"/>
+                </mxCell>
+                <mxCell id="registerDto" value="&lt;b&gt;&amp;lt;&amp;lt;DTO&amp;gt;&amp;gt;&lt;br&gt;RegisterDto&lt;/b&gt;&lt;hr&gt;+ email: string&lt;br&gt;+ password: string&lt;br&gt;+ firstName: string&lt;br&gt;+ lastName: string&lt;br&gt;+ role: UserRole" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" vertex="1">
+                    <mxGeometry x="200" y="1310" width="200" height="150" as="geometry"/>
+                </mxCell>
+                <mxCell id="loginDto" value="&lt;b&gt;&amp;lt;&amp;lt;DTO&amp;gt;&amp;gt;&lt;br&gt;LoginDto&lt;/b&gt;&lt;hr&gt;+ email: string&lt;br&gt;+ password: string" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" vertex="1">
+                    <mxGeometry x="440" y="1310" width="180" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="createJobDto" value="&lt;b&gt;&amp;lt;&amp;lt;DTO&amp;gt;&amp;gt;&lt;br&gt;CreateJobDto&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" vertex="1">
+                    <mxGeometry x="660" y="1310" width="160" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="createAppDto" value="&lt;b&gt;&amp;lt;&amp;lt;DTO&amp;gt;&amp;gt;&lt;br&gt;CreateApplicationDto&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" vertex="1">
+                    <mxGeometry x="860" y="1310" width="200" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="createCompanyDto" value="&lt;b&gt;&amp;lt;&amp;lt;DTO&amp;gt;&amp;gt;&lt;br&gt;CreateCompanyDto&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" vertex="1">
+                    <mxGeometry x="1100" y="1310" width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="createCandidateDto" value="&lt;b&gt;&amp;lt;&amp;lt;DTO&amp;gt;&amp;gt;&lt;br&gt;CreateCandidateDto&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" vertex="1">
+                    <mxGeometry x="200" y="1490" width="190" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="updateAppStatusDto" value="&lt;b&gt;&amp;lt;&amp;lt;DTO&amp;gt;&amp;gt;&lt;br&gt;UpdateApplicationStatusDto&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" vertex="1">
+                    <mxGeometry x="430" y="1490" width="230" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="updateProfileDto" value="&lt;b&gt;&amp;lt;&amp;lt;DTO&amp;gt;&amp;gt;&lt;br&gt;UpdateProfileDto&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" vertex="1">
+                    <mxGeometry x="700" y="1490" width="180" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="updateCandProfileDto" value="&lt;b&gt;&amp;lt;&amp;lt;DTO&amp;gt;&amp;gt;&lt;br&gt;UpdateCandidateProfileDto&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" vertex="1">
+                    <mxGeometry x="920" y="1490" width="230" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="rel1" style="endArrow=open;endSize=12;startArrow=diamondThin;startSize=14;startFill=1;edgeStyle=orthogonalEdgeStyle;" parent="1" source="user" target="candidateProfile" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="rel2" style="endArrow=open;endSize=12;startArrow=diamondThin;startSize=14;startFill=1;edgeStyle=orthogonalEdgeStyle;" parent="1" source="user" target="recruiterProfile" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="rel3" style="endArrow=open;endSize=12;startArrow=diamondThin;startSize=14;startFill=0;edgeStyle=orthogonalEdgeStyle;" parent="1" source="company" target="recruiterProfile" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="rel4" style="endArrow=open;endSize=12;startArrow=diamondThin;startSize=14;startFill=1;edgeStyle=orthogonalEdgeStyle;" parent="1" source="company" target="jobOffer" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="rel5" style="endArrow=open;endSize=12;startArrow=diamondThin;startSize=14;startFill=1;edgeStyle=orthogonalEdgeStyle;" parent="1" source="recruiterProfile" target="jobOffer" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="rel6" style="endArrow=open;endSize=12;startArrow=diamondThin;startSize=14;startFill=1;edgeStyle=orthogonalEdgeStyle;" parent="1" source="candidateProfile" target="application" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="rel7" style="endArrow=open;endSize=12;startArrow=diamondThin;startSize=14;startFill=1;edgeStyle=orthogonalEdgeStyle;" parent="1" source="jobOffer" target="application" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="rel8" style="dashed=1;endArrow=open;edgeStyle=orthogonalEdgeStyle;strokeColor=#999999;" parent="1" source="user" target="enumRole" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="dep1" style="dashed=1;endArrow=block;endFill=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#82b366;" parent="1" source="authService" target="prismaService" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="dep2" style="dashed=1;endArrow=block;endFill=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#82b366;" parent="1" source="authService" target="hashingService" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="dep3" style="dashed=1;endArrow=block;endFill=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#82b366;" parent="1" source="jobService" target="matchingService" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="dep4" style="dashed=1;endArrow=block;endFill=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#82b366;" parent="1" source="jobService" target="notificationGateway" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="dep5" style="dashed=1;endArrow=block;endFill=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#82b366;" parent="1" source="applicationService" target="matchingService" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="dep6" style="dashed=1;endArrow=block;endFill=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#82b366;" parent="1" source="applicationService" target="notificationGateway" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="dep7" style="dashed=1;endArrow=block;endFill=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#82b366;" parent="1" source="matchingCronService" target="matchingService" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="dep8" style="dashed=1;endArrow=block;endFill=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#b85450;" parent="1" source="authController" target="authService" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="dep9" style="dashed=1;endArrow=block;endFill=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#b85450;" parent="1" source="candidatesController" target="candidatesService" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="dep10" style="dashed=1;endArrow=block;endFill=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#b85450;" parent="1" source="companyController" target="companyService" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="dep11" style="dashed=1;endArrow=block;endFill=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#b85450;" parent="1" source="jobController" target="jobService" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="dep12" style="dashed=1;endArrow=block;endFill=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#b85450;" parent="1" source="adminJobController" target="jobService" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="dep13" style="dashed=1;endArrow=block;endFill=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#b85450;" parent="1" source="applicationController" target="applicationService" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="dep14" style="dashed=1;endArrow=block;endFill=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#b85450;" parent="1" source="statsController" target="statsService" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="dep15" style="dashed=1;endArrow=block;endFill=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#b85450;" parent="1" source="profileController" target="profileService" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="dep16" style="dashed=1;endArrow=block;endFill=0;edgeStyle=orthogonalEdgeStyle;strokeColor=#b85450;" parent="1" source="candidateProfileController" target="candidateProfileService" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend" value="&lt;b&gt;LEGEND&lt;/b&gt;&lt;br&gt;Blue = Prisma Entity / Model&lt;br&gt;Green = NestJS Service&lt;br&gt;Red = NestJS Controller&lt;br&gt;Purple = WebSocket Gateway&lt;br&gt;Yellow = Enum&lt;br&gt;Orange = DTO&lt;br&gt;Gray = Guard" style="rounded=1;whiteSpace=wrap;html=1;align=left;verticalAlign=top;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;arcSize=10;" parent="1" vertex="1">
+                    <mxGeometry x="70" y="60" width="240" height="170" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

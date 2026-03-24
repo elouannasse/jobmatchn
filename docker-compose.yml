@@ -11,6 +11,8 @@ services:
       - "${POSTGRES_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - jobmatch_network
 
   adminer:
     image: adminer
@@ -20,6 +22,47 @@ services:
       - "${ADMINER_PORT}:8080"
     depends_on:
       - db
+    networks:
+      - jobmatch_network
+
+  backend:
+    build:
+      context: ./apps/backaned
+      dockerfile: Dockerfile
+    container_name: jobmatch_backend
+    restart: always
+    environment:
+      DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public"
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
+      PORT: 4000
+    ports:
+      - "4000:4000"
+    depends_on:
+      - db
+    command: >
+      sh -c "npx prisma db push --accept-data-loss && npx prisma db seed && npm run start:prod"
+    networks:
+      - jobmatch_network
+
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
+    container_name: jobmatch_frontend
+    restart: always
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - jobmatch_network
+
+networks:
+  jobmatch_network:
+    driver: bridge
 
 volumes:
   postgres_data:
