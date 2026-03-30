@@ -1,0 +1,127 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: jobmatch_user
+          POSTGRES_PASSWORD: jobmatch_password
+          POSTGRES_DB: jobmatch_db
+        ports:
+          - 5434:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Generate Prisma Client
+        run: npm run build -w backaned # This triggers prisma generate usually, or run it explicitly
+        env:
+          DATABASE_URL: postgresql://jobmatch_user:jobmatch_password@localhost:5434/jobmatch_db?schema=public
+
+      - name: Run Backend Linting
+        run: npm run lint -w backaned
+
+      - name: Run Backend Unit Tests
+        run: npm run test -w backaned
+
+      - name: Run Backend E2E Tests
+        run: npm run test:e2e -w backaned
+        env:
+          DATABASE_URL: postgresql://jobmatch_user:jobmatch_password@localhost:5434/jobmatch_db?schema=public
+          JWT_SECRET: ${{ secrets.JWT_SECRET || 'test-secret-key' }}
+
+  frontend-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Frontend Linting
+        run: npm run lint -w frontend
+
+      - name: Build Frontend
+        run: npm run build -w frontend
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:4000/api
+
+  database-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Prisma Validate & Generate
+        run: |
+          npx prisma validate --schema=apps/backaned/prisma/schema.prisma
+          npx prisma generate --schema=apps/backaned/prisma/schema.prisma
+
+  build-and-push:
+    needs: [backend-tests, frontend-tests, database-check]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and Push Backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/backaned
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/jobmatchn-backend:latest
+
+      - name: Build and Push Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/frontend
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/jobmatchn-frontend:latest

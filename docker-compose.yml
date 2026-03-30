@@ -1,68 +1,47 @@
 services:
-  db:
+  postgres:
     image: postgres:16-alpine
-    container_name: jobmatch_db
+    container_name: jobmatch-db
     restart: always
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:-jobmatch_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-jobmatch_password}
+      POSTGRES_DB: ${POSTGRES_DB:-jobmatch_db}
     ports:
-      - "${POSTGRES_PORT}:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    networks:
-      - jobmatch_network
-
-  adminer:
-    image: adminer
-    container_name: jobmatch_adminer
-    restart: always
-    ports:
-      - "${ADMINER_PORT}:8080"
-    depends_on:
-      - db
-    networks:
-      - jobmatch_network
 
   backend:
     build:
       context: ./apps/backaned
       dockerfile: Dockerfile
-    container_name: jobmatch_backend
+    container_name: jobmatch-backend
     restart: always
-    environment:
-      DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public"
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
-      PORT: 4000
     ports:
       - "4000:4000"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-jobmatch_user}:${POSTGRES_PASSWORD:-jobmatch_password}@postgres:5432/${POSTGRES_DB:-jobmatch_db}?schema=public
+      JWT_SECRET: ${JWT_SECRET}
+      GMAIL_USER: ${GMAIL_USER}
+      GMAIL_APP_PASSWORD: ${GMAIL_APP_PASSWORD}
+      PORT: 4000
     depends_on:
-      - db
-    command: >
-      sh -c "npx prisma db push --accept-data-loss && npx prisma db seed && npm run start:prod"
-    networks:
-      - jobmatch_network
+      - postgres
 
   frontend:
     build:
       context: ./apps/frontend
       dockerfile: Dockerfile
-    container_name: jobmatch_frontend
+    container_name: jobmatch-frontend
     restart: always
-    environment:
-      NEXT_PUBLIC_API_URL: http://localhost:4000
     ports:
       - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000/api}
+      NODE_ENV: production
     depends_on:
       - backend
-    networks:
-      - jobmatch_network
-
-networks:
-  jobmatch_network:
-    driver: bridge
 
 volumes:
   postgres_data:
