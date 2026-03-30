@@ -45,7 +45,7 @@ export class ApplicationController {
     const userId = req.user.userId as string;
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     const isAdmin = req.user.role === UserRole.ADMIN;
-    
+
     if (isAdmin) {
       return this.applicationService.findAll();
     }

@@ -9,6 +9,7 @@ import { CreateApplicationDto } from './dto/create-application.dto';
 import { UpdateApplicationStatusDto } from './dto/update-application-status.dto';
 import { MatchingService } from '../matching/matching.service';
 import { NotificationGateway } from '../notification/notification.gateway';
+import { ApplicationStatus } from '@prisma/client';
 
 @Injectable()
 export class ApplicationService {
@@ -18,7 +19,11 @@ export class ApplicationService {
     private notificationGateway: NotificationGateway,
   ) {}
 
-  async create(userId: string, dto: CreateApplicationDto, requesterRole?: string) {
+  async create(
+    userId: string,
+    dto: CreateApplicationDto,
+    requesterRole?: string,
+  ) {
     let candidate;
 
     if (requesterRole === 'ADMIN' && dto.candidateId) {
@@ -97,7 +102,7 @@ export class ApplicationService {
       throw new ForbiddenException('Profil candidat non trouvé');
     }
 
-    return this.prisma.application.findMany({
+    const applications = await this.prisma.application.findMany({
       where: { candidateId: candidate.id },
       orderBy: { createdAt: 'desc' },
       include: {
@@ -110,6 +115,39 @@ export class ApplicationService {
         },
       },
     });
+
+    // Optionnel: recalculer les scores à 0 à la volée pour garantir la fraîcheur
+    const updatedApps = await Promise.all(
+      applications.map(async (app) => {
+        if (app.score === 0) {
+          // On récupère le profil complet pour le matching
+          const fullCandidate = await this.prisma.candidateProfile.findUnique({
+            where: { id: candidate.id },
+            include: { user: true },
+          });
+          if (fullCandidate) {
+            const score = this.matchingService.calculateComprehensiveScore(
+              fullCandidate,
+              app.jobOffer,
+            );
+            return this.prisma.application.update({
+              where: { id: app.id },
+              data: { score },
+              include: {
+                jobOffer: {
+                  include: {
+                    company: { select: { name: true, logoUrl: true } },
+                  },
+                },
+              },
+            });
+          }
+        }
+        return app;
+      }),
+    );
+
+    return updatedApps;
   }
 
   async findAllForRecruiter(userId: string) {
@@ -204,30 +242,30 @@ export class ApplicationService {
       );
     }
 
-    const updateData: any = { 
-      status: dto.status,
-      interviewDate: dto.interviewDate ? new Date(dto.interviewDate) : undefined,
-      interviewMessage: dto.interviewMessage,
-    };
-
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const updatedApplication = await this.prisma.application.update({
       where: { id: applicationId },
-      data: updateData,
-    }) as any;
+      data: {
+        status: dto.status,
+        interviewDate: dto.interviewDate
+          ? new Date(dto.interviewDate)
+          : undefined,
+        interviewMessage: dto.interviewMessage,
+      },
+    });
 
     // Envoyer une notification en temps réel au candidat
-    const candidate = application.candidate as { userId: string } | null;
-    if (candidate) {
+    const candidate = application.candidate;
+    if (candidate && 'userId' in candidate) {
+      const candidateUserId = candidate.userId;
       let message = `Le statut de votre candidature pour "${application.jobOffer.title}" est passé à ${updatedApplication.status}.`;
-      
+
       if (dto.status === 'INTERVIEW' && dto.interviewDate) {
         const date = new Date(dto.interviewDate);
         message = `Vous avez un entretien pour "${application.jobOffer.title}" le ${date.toLocaleDateString('fr-FR')} à ${date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}.`;
       }
 
       this.notificationGateway.sendToUser(
-        candidate.userId,
+        candidateUserId,
         'application_status_updated',
         {
           applicationId: updatedApplication.id,
@@ -280,9 +318,63 @@ export class ApplicationService {
         "Vous n'êtes pas autorisé à supprimer cette candidature",
       );
     }
-
     return this.prisma.application.delete({
       where: { id },
     });
+  }
+
+  async recalculateAllCandidateApplicationScores(candidateId: string) {
+    const applications = await this.prisma.application.findMany({
+      where: { candidateId },
+      include: {
+        candidate: { include: { user: true } },
+        jobOffer: true,
+      },
+    });
+
+    for (const app of applications) {
+      const newScore = this.matchingService.calculateComprehensiveScore(
+        app.candidate,
+        app.jobOffer,
+      );
+
+      await this.prisma.application.update({
+        where: { id: app.id },
+        data: { score: newScore },
+      });
+    }
+  }
+
+  async findOne(id: string) {
+    const application = await this.prisma.application.findUnique({
+      where: { id },
+      include: {
+        candidate: { include: { user: true } },
+        jobOffer: true,
+      },
+    });
+
+    if (!application) {
+      throw new NotFoundException('Candidature non trouvée');
+    }
+
+    // Recalculer si le score est 0 (peut-être calculé avant que le profil soit complet)
+    if (application.score === 0) {
+      const freshScore = this.matchingService.calculateComprehensiveScore(
+        application.candidate,
+        application.jobOffer,
+      );
+
+      return this.prisma.application.update({
+        where: { id },
+        data: { score: freshScore },
+        include: {
+          candidate: { include: { user: true } },
+          jobOffer: true,
+        },
+      });
+    }
+
+    return application;
   }
 }

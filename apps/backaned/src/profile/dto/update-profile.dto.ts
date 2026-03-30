@@ -58,4 +58,8 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsString({ each: true })
   skills?: string[];
+
+  @IsOptional()
+  @IsString()
+  companyId?: string;
 }

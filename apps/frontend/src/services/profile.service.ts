@@ -46,5 +46,15 @@ export const profileService = {
   async getMyAuth() {
     const response = await api.get("/auth/me");
     return response.data;
+  },
+ 
+  async getPublicCompany(id: string) {
+    const response = await api.get(`/companies/${id}`);
+    return response.data;
+  },
+ 
+  async getRecruiterCompany() {
+    const response = await api.get("/companies/me");
+    return response.data;
   }
 };

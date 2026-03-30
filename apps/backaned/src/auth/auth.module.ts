@@ -8,11 +8,13 @@ import { PassportModule } from '@nestjs/passport';
 import { NotificationModule } from '../notification/notification.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { MailerModule } from '@nestjs-modules/mailer';
 
 @Module({
   imports: [
     PassportModule,
     NotificationModule,
+    MailerModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

@@ -2,13 +2,13 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { registerSchema, RegisterInput } from "@/lib/validations/auth.schema";
 import { authService } from "@/services/auth.service";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Sparkles, User, Mail, Lock, UserCircle } from "lucide-react";
+import { Sparkles, User, Mail, Lock, UserCircle, Building2, Globe, MapPin, AlignLeft } from "lucide-react";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -157,6 +157,85 @@ export default function RegisterPage() {
                 <p className="text-xs text-red-400 text-center">{errors.role.message}</p>
               )}
             </div>
+ 
+            {/* COMPANY INFO (only for RECRUITER) */}
+            <AnimatePresence>
+              {selectedRole === "RECRUITER" && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="space-y-4 pt-4 border-t border-white/5 overflow-hidden"
+                >
+                  <p className="text-xs font-black uppercase tracking-widest text-primary mb-4 flex items-center gap-2">
+                    <Building2 className="w-3 h-3" /> Informations Entreprise
+                  </p>
+                  
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium flex items-center gap-2 text-foreground">
+                      Nom de l&apos;entreprise *
+                    </label>
+                    <input
+                      {...register("company.name")}
+                      required={selectedRole === "RECRUITER"}
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary/50 outline-none transition-all text-foreground"
+                      placeholder="Google, Airbus, etc."
+                    />
+                    {errors.company?.name && (
+                      <p className="text-xs text-red-400">{errors.company.name.message}</p>
+                    )}
+                  </div>
+ 
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium flex items-center gap-2 text-foreground">
+                        Secteur *
+                      </label>
+                      <input
+                        {...register("company.industry")}
+                        required={selectedRole === "RECRUITER"}
+                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary/50 outline-none transition-all text-foreground"
+                        placeholder="Technologie"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium flex items-center gap-2 text-foreground">
+                        <MapPin className="w-4 h-4 text-muted-foreground" /> Ville *
+                      </label>
+                      <input
+                        {...register("company.location")}
+                        required={selectedRole === "RECRUITER"}
+                        className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary/50 outline-none transition-all text-foreground"
+                        placeholder="Paris, Marrakech"
+                      />
+                    </div>
+                  </div>
+ 
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium flex items-center gap-2 text-foreground">
+                      <Globe className="w-4 h-4 text-muted-foreground" /> Site Web (optionnel)
+                    </label>
+                    <input
+                      {...register("company.website")}
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary/50 outline-none transition-all text-foreground"
+                      placeholder="https://entreprise.com"
+                    />
+                  </div>
+ 
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium flex items-center gap-2 text-foreground">
+                      <AlignLeft className="w-4 h-4 text-muted-foreground" /> Description (optionnel)
+                    </label>
+                    <textarea
+                      {...register("company.description")}
+                      rows={3}
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 focus:border-primary/50 outline-none transition-all text-foreground resize-none"
+                      placeholder="Parlez-nous de votre entreprise..."
+                    />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             <button
               type="submit"

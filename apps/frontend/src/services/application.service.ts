@@ -49,8 +49,8 @@ export const applicationService = {
     return Array.isArray(response.data) ? response.data : [];
   },
 
-  async getRecruiterApplications(): Promise<RecruiterApplication[]> {
-    const response = await api.get("/applications/recruiter");
+  async getRecruiterApplications(jobId?: string): Promise<RecruiterApplication[]> {
+    const response = await api.get("/applications/recruiter", { params: { jobId } });
     return Array.isArray(response.data) ? response.data : [];
   },
 

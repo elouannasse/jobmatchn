@@ -22,7 +22,7 @@ export default function HomePage() {
         >
           <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass text-sm font-medium mb-8">
             <Sparkles className="w-4 h-4 text-accent" />
-            <span className="text-accent">Matching intelligent par IA</span>
+            <span className="text-accent"></span>
           </span>
           <h1 className="text-6xl md:text-7xl font-bold tracking-tight mb-8">
             Trouvez votre <span className="text-gradient">Match Parfait</span> <br />

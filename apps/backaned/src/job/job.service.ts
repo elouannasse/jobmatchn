@@ -1,8 +1,20 @@
-import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateJobDto } from './dto/create-job.dto';
 import { MatchingService } from '../matching/matching.service';
 import { NotificationGateway } from '../notification/notification.gateway';
+
+interface JobQuery {
+  title?: string;
+  location?: string;
+  contractType?: string;
+  skills?: string | string[];
+  salaryMin?: string | number;
+}
 
 @Injectable()
 export class JobService {
@@ -42,33 +54,37 @@ export class JobService {
       data: {
         ...dto,
         recruiterId,
-        // @ts-ignore
         approvalStatus: dto.isPublished ? 'PENDING' : 'APPROVED',
       },
     });
   }
 
-  async findAll(query: any, userId?: string) {
+  async findAll(query: JobQuery, userId?: string) {
     const { title, location, contractType, skills, salaryMin } = query;
 
     const jobs = await this.prisma.jobOffer.findMany({
       where: {
         isPublished: true,
-        // @ts-ignore
         approvalStatus: 'APPROVED',
         ...(title && {
-          title: { contains: title, mode: 'insensitive' },
+          OR: [
+            { title: { contains: title, mode: 'insensitive' } },
+            { company: { name: { contains: title, mode: 'insensitive' } } },
+            { skills: { hasSome: [title] } },
+          ],
         }),
         ...(location && {
           location: { contains: location, mode: 'insensitive' },
         }),
-        ...(contractType && { contractType }),
+        ...(contractType && { contractType: contractType as any }),
         ...(salaryMin && {
           salaryMin: { gte: Number(salaryMin) },
         }),
-        ...(skills && skills.length > 0 && {
-          skills: { hasSome: Array.isArray(skills) ? skills : [skills] },
-        }),
+        ...(skills &&
+          Array.isArray(skills) &&
+          skills.length > 0 && {
+            skills: { hasSome: skills },
+          }),
       },
       include: {
         company: {
@@ -91,7 +107,7 @@ export class JobService {
       });
 
       if (candidate) {
-        return jobs.map((job) => ({
+        return (jobs as any[]).map((job) => ({
           ...job,
           matchScore: this.matchingService.calculateComprehensiveScore(
             candidate,
@@ -126,7 +142,12 @@ export class JobService {
     return job;
   }
 
-  async update(id: string, recruiterUserId: string, dto: Partial<CreateJobDto>, isAdmin = false) {
+  async update(
+    id: string,
+    recruiterUserId: string,
+    dto: Partial<CreateJobDto>,
+    isAdmin = false,
+  ) {
     const job = await this.findOne(id);
 
     if (!isAdmin) {
@@ -135,7 +156,9 @@ export class JobService {
       });
 
       if (!recruiter || job.recruiterId !== recruiter.id) {
-        throw new ForbiddenException("Vous n'avez pas la permission de modifier cette offre");
+        throw new ForbiddenException(
+          "Vous n'avez pas la permission de modifier cette offre",
+        );
       }
     }
 
@@ -145,7 +168,6 @@ export class JobService {
         ...dto,
         // If isPublished is set to true in the update, set to PENDING for review
         ...(dto.isPublished === true && {
-          // @ts-ignore
           approvalStatus: 'PENDING',
         }),
       },
@@ -161,7 +183,9 @@ export class JobService {
       });
 
       if (!recruiter || job.recruiterId !== recruiter.id) {
-        throw new ForbiddenException("Vous n'avez pas la permission de supprimer cette offre");
+        throw new ForbiddenException(
+          "Vous n'avez pas la permission de supprimer cette offre",
+        );
       }
     }
 
@@ -215,7 +239,6 @@ export class JobService {
   async findPendingAdmin() {
     return this.prisma.jobOffer.findMany({
       where: {
-        // @ts-ignore
         approvalStatus: 'PENDING',
       },
       include: {
@@ -245,7 +268,6 @@ export class JobService {
     const updatedJob = await this.prisma.jobOffer.update({
       where: { id },
       data: {
-        // @ts-ignore
         approvalStatus: 'APPROVED',
         approvedAt: new Date(),
         approvedBy: adminId,
@@ -253,16 +275,12 @@ export class JobService {
     });
 
     // Send notification
-    this.notificationGateway.sendToUser(
-      job.recruiter.userId,
-      'notification',
-      {
-        type: 'JOB_APPROVED',
-        title: 'Offre approuvée ✅',
-        message: `Votre offre '${job.title}' a été approuvée ✅`,
-        jobId: job.id,
-      },
-    );
+    this.notificationGateway.sendToUser(job.recruiter.userId, 'notification', {
+      type: 'JOB_APPROVED',
+      title: 'Offre approuvée ✅',
+      message: `Votre offre '${job.title}' a été approuvée ✅`,
+      jobId: job.id,
+    });
 
     return updatedJob;
   }
@@ -280,7 +298,6 @@ export class JobService {
     const updatedJob = await this.prisma.jobOffer.update({
       where: { id },
       data: {
-        // @ts-ignore
         approvalStatus: 'REJECTED',
         rejectedReason: reason,
         isPublished: false, // Automatically unpublish if rejected
@@ -288,17 +305,13 @@ export class JobService {
     });
 
     // Send notification
-    this.notificationGateway.sendToUser(
-      job.recruiter.userId,
-      'notification',
-      {
-        type: 'JOB_REJECTED',
-        title: 'Offre rejetée ❌',
-        message: `Votre offre '${job.title}' a été rejetée ❌\nRaison: ${reason}`,
-        jobId: job.id,
-        reason,
-      },
-    );
+    this.notificationGateway.sendToUser(job.recruiter.userId, 'notification', {
+      type: 'JOB_REJECTED',
+      title: 'Offre rejetée ❌',
+      message: `Votre offre '${job.title}' a été rejetée ❌\nRaison: ${reason}`,
+      jobId: job.id,
+      reason,
+    });
 
     return updatedJob;
   }

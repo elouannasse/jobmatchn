@@ -23,9 +23,7 @@ export class StatsService {
       this.prisma.candidateProfile.count(),
       this.prisma.company.count(),
       this.prisma.user.count({ where: { role: 'RECRUITER' } }),
-      // @ts-ignore
       this.prisma.recruiterProfile.count({ where: { isApproved: false } }),
-      // @ts-ignore
       this.prisma.jobOffer.count({ where: { approvalStatus: 'PENDING' } }),
       this.prisma.application.groupBy({
         by: ['status'],
@@ -75,8 +73,10 @@ export class StatsService {
     });
 
     // Group by month
-    const growth = users.reduce((acc: any, user: any) => {
-      const month = user.createdAt.toLocaleString('default', { month: 'short' });
+    const growth = users.reduce((acc: Record<string, number>, user) => {
+      const month = user.createdAt.toLocaleString('default', {
+        month: 'short',
+      });
       acc[month] = (acc[month] || 0) + 1;
       return acc;
     }, {});
@@ -140,7 +140,7 @@ export class StatsService {
       },
     });
 
-    const growth = monthlyApps.reduce((acc: any, app: any) => {
+    const growth = monthlyApps.reduce((acc: Record<string, number>, app) => {
       const month = app.createdAt.toLocaleString('default', { month: 'short' });
       acc[month] = (acc[month] || 0) + 1;
       return acc;

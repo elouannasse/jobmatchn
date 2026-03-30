@@ -1,30 +1,35 @@
 # Build stage
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
 # Install dependencies
+# Using --legacy-peer-deps to handle dependency conflicts between NestJS and validator packages
 COPY package*.json ./
-COPY prisma ./prisma/
 RUN npm install --legacy-peer-deps
 
-# Copy source and build
+# Copy source code
 COPY . .
+
+# Generate Prisma client
 RUN npx prisma generate
+
+# Build the application
 RUN npm run build
 
 # Production stage
-FROM node:20-alpine AS runner
+FROM node:22-alpine
 
 WORKDIR /app
 
-# Copy everything needed to run
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 
+# Expose port (user requested 4000)
+ENV PORT=4000
 EXPOSE 4000
 
-# NestJS compiles src/* into dist/src/* due to tsconfig baseUrl: "./"
-CMD ["node", "dist/src/main.js"]
+# Start the application
+CMD ["npm", "run", "start:prod"]

@@ -57,6 +57,9 @@ export function Navbar() {
                     <Link href="/companies/me" className="text-sm font-bold text-muted-foreground hover:text-white transition-colors flex items-center gap-2">
                       <Building2 className="w-4 h-4" /> Entreprise
                     </Link>
+                    <Link href="/dashboard/recruiter/profil" className="text-sm font-bold text-muted-foreground hover:text-white transition-colors flex items-center gap-2">
+                      <UserIcon className="w-4 h-4" /> Profil
+                    </Link>
                   </>
                 )}
               </>

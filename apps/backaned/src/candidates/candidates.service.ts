@@ -3,16 +3,26 @@ import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCandidateDto } from './dto/create-candidate.dto';
 import { UpdateCandidateDto } from './dto/update-candidate.dto';
+import { ApplicationService } from '../application/application.service';
 
 @Injectable()
 export class CandidatesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private applicationService: ApplicationService,
+  ) {}
 
   async findAll() {
     return this.prisma.candidateProfile.findMany({
       include: {
         user: {
-          select: { id: true, email: true, firstName: true, lastName: true, createdAt: true },
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            createdAt: true,
+          },
         },
       },
     });
@@ -23,7 +33,13 @@ export class CandidatesService {
       where: { id },
       include: {
         user: {
-          select: { id: true, email: true, firstName: true, lastName: true, createdAt: true },
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            createdAt: true,
+          },
         },
         applications: true,
       },
@@ -62,10 +78,15 @@ export class CandidatesService {
   async update(id: string, dto: UpdateCandidateDto) {
     await this.findOne(id);
 
-    return this.prisma.candidateProfile.update({
+    const updatedProfile = await this.prisma.candidateProfile.update({
       where: { id },
       data: dto,
     });
+
+    // Recalculer tous les scores de ses candidatures après mise à jour du profil
+    await this.applicationService.recalculateAllCandidateApplicationScores(id);
+
+    return updatedProfile;
   }
 
   async remove(id: string) {

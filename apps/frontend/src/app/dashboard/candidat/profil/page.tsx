@@ -17,7 +17,8 @@ import {
   Trash2,
   CheckCircle2,
   Sparkles,
-  Info
+  Info,
+  Lock as LockIcon
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "@/services/api";
@@ -57,6 +58,12 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
+  // Password States
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
+
   useEffect(() => {
     fetchProfile();
   }, []);
@@ -85,11 +92,11 @@ export default function ProfilePage() {
     }
   };
 
-  const handleUpdateProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleUpdateProfile = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     try {
       setSaving(true);
-      await api.put("/profile", {
+      const res = await api.put("/profile", {
         firstName,
         lastName,
         title,
@@ -98,6 +105,7 @@ export default function ProfilePage() {
         linkedinUrl,
         skills
       });
+      setProfile(res.data);
       toast.success("Profil mis à jour avec succès ! ✨");
     } catch (error) {
       toast.error("Erreur lors de la mise à jour");
@@ -106,18 +114,54 @@ export default function ProfilePage() {
     }
   };
 
-  const handleAddSkill = (e: React.KeyboardEvent) => {
+  const handleAddSkill = async (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && newSkill.trim()) {
       e.preventDefault();
-      if (!skills.includes(newSkill.trim())) {
-        setSkills([...skills, newSkill.trim()]);
+      const trimmedSkill = newSkill.trim();
+      if (!skills.includes(trimmedSkill)) {
+        const updatedSkills = [...skills, trimmedSkill];
+        setSkills(updatedSkills);
+        setNewSkill("");
+        
+        // Auto-save to database immediately
+        try {
+          await api.put("/profile", {
+            firstName,
+            lastName,
+            title,
+            summary,
+            location,
+            linkedinUrl,
+            skills: updatedSkills
+          });
+          toast.success(`Compétence "${trimmedSkill}" ajoutée et sauvegardée !`);
+        } catch (error) {
+          toast.error("Erreur lors de la sauvegarde de la compétence");
+        }
+      } else {
+        setNewSkill("");
       }
-      setNewSkill("");
     }
   };
 
-  const removeSkill = (skillToRemove: string) => {
-    setSkills(skills.filter(s => s !== skillToRemove));
+  const removeSkill = async (skillToRemove: string) => {
+    const updatedSkills = skills.filter(s => s !== skillToRemove);
+    setSkills(updatedSkills);
+    
+    // Auto-save removal to database
+    try {
+      await api.put("/profile", {
+        firstName,
+        lastName,
+        title,
+        summary,
+        location,
+        linkedinUrl,
+        skills: updatedSkills
+      });
+    } catch (error) {
+      toast.error("Erreur lors de la suppression");
+    }
   };
 
   const handleCvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -134,16 +178,78 @@ export default function ProfilePage() {
       const formData = new FormData();
       formData.append("file", file);
 
+      // axios will set the correct Content-Type with boundary if we don't manualy set it
+      // we remove the default header to let axios handle it
       const res = await api.post("/profile/cv", formData, {
-        headers: { "Content-Type": "multipart/form-data" }
+        headers: {
+          "Content-Type": "multipart/form-data" // wait, many people say removing it is better
+        },
+        transformRequest: (data, headers) => {
+          // deleting Content-Type from headers to let Axios handle it with boundary
+          delete headers["Content-Type"];
+          return data;
+        }
       });
       
       setProfile(res.data);
       toast.success("CV uploadé avec succès ! 📑");
-    } catch (error) {
-      toast.error("Erreur lors de l'upload du CV");
+      // Optional: Reset the file input
+      if (e.target) (e.target as any).value = "";
+    } catch (error: any) {
+      console.error("CV Upload Error Details:", {
+        error: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+
+      const status = error.response?.status;
+      let message = "Erreur lors de l'upload du CV";
+
+      if (status === 401) {
+        message = "Session expirée, veuillez vous reconnecter";
+      } else if (status === 413) {
+        message = "Fichier trop volumineux (max 5Mo)";
+      } else if (status === 400) {
+        message = error.response?.data?.message || "Format non accepté (PDF, DOC uniquement)";
+      } else if (error.message === "Network Error") {
+        message = "Erreur réseau, vérifiez votre connexion";
+      }
+
+      toast.error(message);
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (newPassword.length < 8) {
+      toast.error("Le nouveau mot de passe doit faire au moins 8 caractères");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error("Les nouveaux mots de passe ne correspondent pas");
+      return;
+    }
+
+    try {
+      setChangingPassword(true);
+      await api.patch("/auth/change-password", {
+        currentPassword,
+        newPassword
+      });
+      
+      toast.success("Mot de passe modifié avec succès ! ✅");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error: any) {
+      const message = error.response?.data?.message || "Erreur lors du changement de mot de passe";
+      toast.error(message);
+    } finally {
+      setChangingPassword(false);
     }
   };
 
@@ -280,6 +386,65 @@ export default function ProfilePage() {
                     <Save className="w-5 h-5" />
                   )}
                   {saving ? "Sauvegarde..." : "Enregistrer les modifications"}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Change Password Section */}
+          <div className="glass p-10 rounded-[48px] border border-white/5 bg-white/[0.01]">
+            <div className="flex items-center gap-3 mb-10">
+              <LockIcon className="w-5 h-5 text-amber-500" />
+              <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-muted-foreground">Sécurité & Connexion</h2>
+            </div>
+
+            <form onSubmit={handleChangePassword} className="space-y-8">
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-4">Mot de passe actuel</label>
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="w-full px-6 py-4 rounded-[20px] bg-white/5 border border-white/10 focus:border-amber-500/50 focus:ring-4 focus:ring-amber-500/5 outline-none font-bold text-sm transition-all"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-4">Nouveau mot de passe</label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full px-6 py-4 rounded-[20px] bg-white/5 border border-white/10 focus:border-primary/50 focus:ring-4 focus:ring-primary/5 outline-none font-bold text-sm transition-all"
+                    required
+                  />
+                </div>
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-4">Confirmer le nouveau mot de passe</label>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full px-6 py-4 rounded-[20px] bg-white/5 border border-white/10 focus:border-primary/50 focus:ring-4 focus:ring-primary/5 outline-none font-bold text-sm transition-all"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="pt-4">
+                <button
+                  type="submit"
+                  disabled={changingPassword}
+                  className="w-full md:w-auto px-12 py-5 rounded-[22px] bg-white/5 border border-white/10 text-white font-black uppercase tracking-[0.2em] text-xs hover:bg-white/10 active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-50"
+                >
+                  {changingPassword ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <LockIcon className="w-5 h-5 text-amber-500" />
+                  )}
+                  {changingPassword ? "Mise à jour..." : "Modifier le mot de passe"}
                 </button>
               </div>
             </form>

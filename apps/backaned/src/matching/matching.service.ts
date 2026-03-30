@@ -1,11 +1,32 @@
 import { Injectable } from '@nestjs/common';
 
+export interface MatchingCandidate {
+  skills?: string[] | null;
+  title?: string | null;
+  location?: string | null;
+  summary?: string | null;
+  user?: {
+    firstName?: string | null;
+    lastName?: string | null;
+  } | null;
+}
+
+export interface MatchingJob {
+  skills?: string[] | null;
+  title?: string | null;
+  location?: string | null;
+  description?: string | null;
+}
+
 @Injectable()
 export class MatchingService {
   /**
    * Calcule un score global pondéré entre un candidat et une offre d'emploi.
    */
-  calculateComprehensiveScore(candidate: any, job: any): number {
+  calculateComprehensiveScore(
+    candidate: MatchingCandidate,
+    job: MatchingJob,
+  ): number {
     const weights = {
       skills: 0.6,
       title: 0.2,
@@ -13,33 +34,39 @@ export class MatchingService {
       summary: 0.1,
     };
 
-    const scores = {
-      skills: this.calculateSkillsScore(candidate.skills, job.skills),
-      title: this.calculateTitleScore(candidate.title, job.title),
-      location: this.calculateLocationScore(candidate.location, job.location),
-      summary: this.calculateSummaryScore(candidate.summary, job.description),
-    };
-
-    console.log(`[MatchingService] Matching score debug:`, {
-      candidate: { 
-        name: candidate.user ? `${candidate.user.firstName} ${candidate.user.lastName}` : 'N/A',
-        skills: candidate.skills,
-        title: candidate.title,
-        location: candidate.location
-      },
-      job: { 
-        title: job.title,
-        skills: job.skills,
-        location: job.location
-      },
-      breakdown: scores
+    console.log(`[MatchingService] CALCULATION START for candidate:`, {
+      skills: candidate.skills,
+      title: candidate.title,
+    });
+    console.log(`[MatchingService] job:`, {
+      title: job.title,
+      skills: job.skills,
     });
 
-    const finalScore = 
-      (scores.skills * weights.skills) +
-      (scores.title * weights.title) +
-      (scores.location * weights.location) +
-      (scores.summary * weights.summary);
+    const scores = {
+      skills: this.calculateSkillsScore(
+        candidate.skills || [],
+        job.skills || [],
+      ),
+      title: this.calculateTitleScore(candidate.title || '', job.title || ''),
+      location: this.calculateLocationScore(
+        candidate.location || '',
+        job.location || '',
+      ),
+      summary: this.calculateSummaryScore(
+        candidate.summary || '',
+        job.description || '',
+      ),
+    };
+
+    const finalScore =
+      scores.skills * weights.skills +
+      scores.title * weights.title +
+      scores.location * weights.location +
+      scores.summary * weights.summary;
+
+    console.log(`[MatchingService] CALCULATION END. Breakdowns:`, scores);
+    console.log(`[MatchingService] Final Score:`, finalScore);
 
     return Math.round(finalScore);
   }
@@ -51,11 +78,20 @@ export class MatchingService {
     if (!jobSkills || jobSkills.length === 0) return 100;
     if (!candidateSkills || candidateSkills.length === 0) return 0;
 
-    const normalizedCandidate = candidateSkills.map(s => s.toLowerCase().trim());
-    const normalizedJob = jobSkills.map(s => s.toLowerCase().trim());
+    const normalizedCandidate = candidateSkills.map((s) =>
+      s.toLowerCase().trim(),
+    );
+    const normalizedJob = jobSkills.map((s) => s.toLowerCase().trim());
 
-    const matches = normalizedJob.filter(skill => normalizedCandidate.includes(skill));
-    return (matches.length / normalizedJob.length) * 100;
+    const matches = normalizedJob.filter((skill) =>
+      normalizedCandidate.includes(skill),
+    );
+
+    // Formula: (matchingSkills / totalRequiredSkills) * 100
+    const score = (matches.length / normalizedJob.length) * 100;
+
+    console.log(`[MatchingService] Skill match: ${matches.length}/${normalizedJob.length} -> ${score}%`);
+    return score;
   }
 
   /**
@@ -63,17 +99,18 @@ export class MatchingService {
    * Compare le titre du profil et le titre du job (overlap de mots-clés)
    */
   calculateTitleScore(candidateTitle: string, jobTitle: string): number {
-    if (!candidateTitle || !jobTitle) return 0;
+    const cTitle = (candidateTitle || '').toLowerCase().trim();
+    const jTitle = (jobTitle || '').toLowerCase().trim();
 
-    const words1 = this.extractKeywords(candidateTitle);
-    const words2 = this.extractKeywords(jobTitle);
+    if (!cTitle || !jTitle) return 0;
+    if (cTitle === jTitle) return 100;
 
-    if (words2.length === 0) return 100;
+    const words1 = this.extractKeywords(cTitle);
+    const words2 = this.extractKeywords(jTitle);
 
-    const matches = words2.filter(w => words1.includes(w));
-    // Si correspondance exacte, 100%. Sinon proportionnel.
-    if (candidateTitle.toLowerCase().trim() === jobTitle.toLowerCase().trim()) return 100;
-    
+    if (words2.length === 0) return 0; // Au lieu de 100, pour éviter les faux positifs sur titres vides/courts
+
+    const matches = words2.filter((w) => words1.includes(w));
     return (matches.length / words2.length) * 100;
   }
 
@@ -81,7 +118,12 @@ export class MatchingService {
    * Score de localisation (10%)
    */
   calculateLocationScore(candidateLoc: string, jobLoc: string): number {
-    if (!jobLoc || jobLoc.toLowerCase().includes('télétravail') || jobLoc.toLowerCase().includes('remote')) return 100;
+    if (
+      !jobLoc ||
+      jobLoc.toLowerCase().includes('télétravail') ||
+      jobLoc.toLowerCase().includes('remote')
+    )
+      return 100;
     if (!candidateLoc) return 0;
 
     const cLoc = candidateLoc.toLowerCase().trim();
@@ -105,24 +147,51 @@ export class MatchingService {
 
     if (descKeywords.length === 0) return 100;
 
-    const matches = descKeywords.filter(w => summaryKeywords.includes(w));
+    const matches = descKeywords.filter((w) => summaryKeywords.includes(w));
     // On limite à 100% même si beaucoup de mots matchent
     const score = (matches.length / Math.min(descKeywords.length, 20)) * 100;
-    
+
     return Math.min(score, 100);
   }
 
   private extractKeywords(text: string): string[] {
     if (!text) return [];
-    
+
     // Stop words simples (FR/EN)
-    const stopWords = new Set(['le', 'la', 'les', 'de', 'du', 'des', 'un', 'une', 'et', 'en', 'pour', 'avec', 'par', 'sur', 'dans', 'the', 'and', 'for', 'with', 'is', 'at', 'on', 'in', 'to', 'a']);
-    
+    const stopWords = new Set([
+      'le',
+      'la',
+      'les',
+      'de',
+      'du',
+      'des',
+      'un',
+      'une',
+      'et',
+      'en',
+      'pour',
+      'avec',
+      'par',
+      'sur',
+      'dans',
+      'the',
+      'and',
+      'for',
+      'with',
+      'is',
+      'at',
+      'on',
+      'in',
+      'to',
+      'a',
+      'of',
+    ]);
+
     return text
       .toLowerCase()
       .replace(/[^\w\s]/g, ' ') // Supprimer ponctuation
       .split(/\s+/)
-      .filter(w => w.length > 2 && !stopWords.has(w));
+      .filter((w) => w.length >= 2 && !stopWords.has(w)); // Admet "AI", "JS", "Go"
   }
 
   /**
@@ -134,7 +203,11 @@ export class MatchingService {
 
   getMatchedSkills(candidateSkills: string[], jobSkills: string[]): string[] {
     if (!candidateSkills || !jobSkills) return [];
-    const normalizedCandidate = candidateSkills.map(s => s.toLowerCase().trim());
-    return jobSkills.filter(s => normalizedCandidate.includes(s.toLowerCase().trim()));
+    const normalizedCandidate = candidateSkills.map((s) =>
+      s.toLowerCase().trim(),
+    );
+    return jobSkills.filter((s) =>
+      normalizedCandidate.includes(s.toLowerCase().trim()),
+    );
   }
 }

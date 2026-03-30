@@ -20,22 +20,17 @@ const contractTypes = [
 
 export function FilterSidebar({ onFilterChange }: FilterSidebarProps) {
   const [filters, setFilters] = useState({
-    title: "",
     location: "",
     contractType: "",
     salaryMin: "",
   });
 
-  // Debounce filter changes
+  // Directly call onFilterChange when filters change (JobsPage will handle debouncing)
   useEffect(() => {
-    const timer = setTimeout(() => {
-      onFilterChange({
-        ...filters,
-        salaryMin: filters.salaryMin ? parseInt(filters.salaryMin, 10) : undefined
-      });
-    }, 400);
-
-    return () => clearTimeout(timer);
+    onFilterChange({
+      ...filters,
+      salaryMin: filters.salaryMin ? parseInt(filters.salaryMin, 10) : undefined
+    });
   }, [filters, onFilterChange]);
 
   const updateFilters = (key: string, value: string) => {
@@ -44,7 +39,6 @@ export function FilterSidebar({ onFilterChange }: FilterSidebarProps) {
 
   const clearFilters = () => {
     setFilters({
-      title: "",
       location: "",
       contractType: "",
       salaryMin: "",
@@ -75,20 +69,7 @@ export function FilterSidebar({ onFilterChange }: FilterSidebarProps) {
       </div>
 
       <div className="space-y-6">
-        {/* Search */}
-        <div className="space-y-2">
-          <label className="text-xs uppercase font-black tracking-widest text-muted-foreground mr-1">Titre ou Entreprise</label>
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input
-              type="text"
-              value={filters.title}
-              onChange={(e) => updateFilters("title", e.target.value)}
-              className="w-full pl-12 pr-4 py-3 rounded-2xl bg-white/5 border border-white/10 focus:border-primary/50 outline-none transition-all placeholder:text-muted-foreground/30"
-              placeholder="ex: Frontend Developer"
-            />
-          </div>
-        </div>
+        {/* Removed title search from here (now in top bar) */}
 
         {/* Location */}
         <div className="space-y-2">

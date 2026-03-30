@@ -8,6 +8,13 @@ export const registerSchema = z.object({
   firstName: z.string().min(2, "Le prénom est trop court"),
   lastName: z.string().min(2, "Le nom est trop court"),
   role: z.enum(["CANDIDATE", "RECRUITER"]),
+  company: z.object({
+    name: z.string().min(2, "Le nom de l'entreprise est trop court").optional(),
+    industry: z.string().min(2, "Le secteur d'activité est requis").optional(),
+    location: z.string().min(2, "La localisation est requise").optional(),
+    website: z.string().url("URL invalide").optional().or(z.literal("")),
+    description: z.string().optional(),
+  }).optional(),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;

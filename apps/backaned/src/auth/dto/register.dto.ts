@@ -2,14 +2,39 @@ import {
   IsEmail,
   IsEnum,
   IsNotEmpty,
+  IsOptional,
   IsString,
   MinLength,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export enum UserRole {
   CANDIDATE = 'CANDIDATE',
   RECRUITER = 'RECRUITER',
   ADMIN = 'ADMIN',
+}
+
+export class CompanyDto {
+  @IsString()
+  @IsNotEmpty({ message: "Le nom de l'entreprise est requis" })
+  name: string;
+
+  @IsString()
+  @IsNotEmpty({ message: "Le secteur d'activité est requis" })
+  industry: string;
+
+  @IsString()
+  @IsNotEmpty({ message: 'La localisation est requise' })
+  location: string;
+
+  @IsString()
+  @IsOptional()
+  website?: string;
+
+  @IsString()
+  @IsOptional()
+  description?: string;
 }
 
 export class RegisterDto {
@@ -32,4 +57,9 @@ export class RegisterDto {
 
   @IsEnum(UserRole, { message: 'Rôle invalide' })
   role: UserRole;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => CompanyDto)
+  company?: CompanyDto;
 }

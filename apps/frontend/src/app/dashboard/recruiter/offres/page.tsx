@@ -15,7 +15,8 @@ import {
   Eye,
   MoreVertical,
   Calendar,
-  AlertCircle
+  AlertCircle,
+  Clock
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { jobService } from "@/services/job.service";

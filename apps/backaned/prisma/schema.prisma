@@ -143,3 +143,13 @@ enum JobApprovalStatus {
   APPROVED
   REJECTED
 }
+
+model PasswordReset {
+  id        String   @id @default(uuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("password_resets")
+}

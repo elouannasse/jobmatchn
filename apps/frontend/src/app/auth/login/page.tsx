@@ -68,9 +68,17 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium flex items-center gap-2 text-foreground">
-                <Lock className="w-4 h-4 text-muted-foreground" /> Mot de passe
-              </label>
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium flex items-center gap-2 text-foreground">
+                  <Lock className="w-4 h-4 text-muted-foreground" /> Mot de passe
+                </label>
+                <Link 
+                  href="/auth/forgot-password" 
+                  className="text-xs text-primary hover:underline font-medium"
+                >
+                  Mot de passe oublié ?
+                </Link>
+              </div>
               <input
                 {...register("password")}
                 type="password"

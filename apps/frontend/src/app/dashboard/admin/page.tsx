@@ -24,7 +24,10 @@ import {
   Clock,
   Trophy,
   ShieldAlert,
-  UserCheck
+  UserCheck,
+  Globe,
+  MapPin,
+  Sparkles
 } from "lucide-react";
 import { 
   LineChart, 
@@ -139,31 +142,6 @@ const MOCK_ALERTS = [
   { id: 3, type: "NEW", title: "Inscriptions", count: 8, text: "aujourd'hui", icon: UserPlus, color: "text-blue-400", bg: "bg-blue-400/10", border: "border-blue-400/20" },
 ];
 
-const MOCK_PERIODS_DATA: Record<string, GrowthData[]> = {
-  "Aujourd'hui": [
-    { month: "08:00", users: 5 }, { month: "10:00", users: 12 }, { month: "12:00", users: 28 },
-    { month: "14:00", users: 45 }, { month: "16:00", users: 52 }, { month: "18:00", users: 68 }
-  ],
-  "Cette semaine": [
-    { month: "Lun", users: 120 }, { month: "Mar", users: 210 }, { month: "Mer", users: 180 },
-    { month: "Jeu", users: 250 }, { month: "Ven", users: 310 }, { month: "Sam", users: 280 }, { month: "Dim", users: 240 }
-  ],
-  "Ce mois": [
-    { month: "Sem 1", users: 850 }, { month: "Sem 2", users: 1200 }, { month: "Sem 3", users: 1100 }, { month: "Sem 4", users: 1450 }
-  ],
-  "3 derniers mois": [
-    { month: "Jan", users: 3200 }, { month: "Fév", users: 3800 }, { month: "Mar", users: 4500 }
-  ],
-  "6 derniers mois": [
-    { month: "Août", users: 1800 }, { month: "Sep", users: 2200 }, { month: "Oct", users: 2800 },
-    { month: "Nov", users: 3100 }, { month: "Déc", users: 3500 }, { month: "Jan", users: 4000 }
-  ],
-  "Cette année": [
-    { month: "Jan", users: 4000 }, { month: "Fév", users: 4500 }, { month: "Mar", users: 5200 },
-    { month: "Avr", users: 5800 }, { month: "Mai", users: 6500 }, { month: "Juin", users: 7200 }
-  ]
-};
-
 const CONTRACT_TYPES = ["CDI", "CDD", "INTERNSHIP", "FREELANCE", "PART_TIME"];
 const APPLICATION_STATUSES = ["PENDING", "REVIEWING", "INTERVIEWED", "ACCEPTED", "REJECTED"];
 
@@ -202,6 +180,12 @@ export default function AdminDashboard() {
   const [isApproving, setIsApproving] = useState<string | null>(null);
   const [isApprovingJob, setIsApprovingJob] = useState<string | null>(null);
 
+  // Real data for widgets
+  const [topCompanies, setTopCompanies] = useState<{ name: string; sector: string; offers: number }[]>([]);
+  const [recentActivities, setRecentActivities] = useState<{ id: string; icon: any; bg: string; color: string; title: string; description: string; time: string }[]>([]);
+  const [perfPrecision, setPerfPrecision] = useState(0);
+  const [perfImpact, setPerfImpact] = useState(0);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -221,6 +205,114 @@ export default function AdminDashboard() {
         setGrowth(growthData);
         setPendingRecruiters(pendingData);
         setPendingJobs(pendingJobsData);
+
+        console.log("📈 Growth Data (Users per month):", growthData);
+        console.log("📊 Global Stats:", statsData);
+
+        // --- TOP COMPANIES: count jobs per company ---
+        const companiesWithOffers = companiesData
+          .map((c: Company) => ({
+            name: c.name,
+            sector: c.industry || "Non renseigné",
+            offers: (jobsData as any[]).filter((j: any) => j.companyId === c.id || j.company?.id === c.id).length,
+          }))
+          .sort((a: any, b: any) => b.offers - a.offers)
+          .slice(0, 5);
+        setTopCompanies(companiesWithOffers);
+
+        // --- RECENT ACTIVITIES: mix candidates + jobs + applications ---
+        const allApplications: any[] = await applicationService.getAllApplicationsAdmin().catch(() => []);
+
+        const activities: typeof recentActivities = [];
+
+        // Recent candidates (last 5)
+        const recentCandidates = [...candidatesData]
+          .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .slice(0, 3);
+        recentCandidates.forEach((c: any) => {
+          activities.push({
+            id: `cand-${c.id}`,
+            icon: UserPlus,
+            bg: "bg-blue-400/10",
+            color: "text-blue-400",
+            title: "Nouveau candidat inscrit",
+            description: `${c.user?.firstName ?? ""} ${c.user?.lastName ?? ""} a rejoint la plateforme`,
+            time: new Date(c.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }),
+          });
+        });
+
+        // Recent jobs (last 3)
+        const recentJobs = [...(jobsData as any[])]
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .slice(0, 3);
+        recentJobs.forEach((j: any) => {
+          activities.push({
+            id: `job-${j.id}`,
+            icon: Briefcase,
+            bg: "bg-purple-400/10",
+            color: "text-purple-400",
+            title: "Nouvelle offre publiée",
+            description: `${j.title} @ ${j.company?.name ?? "Entreprise"}`,
+            time: new Date(j.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }),
+          });
+        });
+
+        // Recent applications (last 3)
+        const recentApps = [...allApplications]
+          .sort((a: any, b: any) => new Date(b.createdAt ?? b.updatedAt).getTime() - new Date(a.createdAt ?? a.updatedAt).getTime())
+          .slice(0, 3);
+        recentApps.forEach((app: any) => {
+          activities.push({
+            id: `app-${app.id}`,
+            icon: RefreshCw,
+            bg: "bg-orange-400/10",
+            color: "text-orange-400",
+            title: "Candidature mise à jour",
+            description: `${app.candidate?.user?.firstName ?? "Candidat"} → ${app.status} (${app.jobOffer?.title ?? "Offre"})`,
+            time: new Date(app.updatedAt ?? app.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }),
+          });
+        });
+
+        // Sort all activities by ISO date desc and keep top 5
+        setRecentActivities(activities.slice(0, 5));
+
+        // --- PERFORMANCE: compute from application scores ---
+        if (allApplications.length > 0) {
+          const jobSkillsMap: Record<string, string[]> = {};
+          (jobsData as any[]).forEach(j => {
+            jobSkillsMap[j.id] = j.skills || [];
+          });
+
+          const scores = allApplications.map((app: any) => {
+            let score = Number(app.score ?? 0);
+            
+            // Recalculate if score is 0
+            if (score === 0) {
+              const candSkills = app.candidate?.skills || [];
+              const jobSkills = jobSkillsMap[app.jobOfferId] || app.jobOffer?.skills || [];
+              
+              if (candSkills.length > 0 && jobSkills.length > 0) {
+                const matches = candSkills.filter((s: string) => 
+                  jobSkills.some((js: string) => js.toLowerCase() === s.toLowerCase())
+                ).length;
+                score = Math.round((matches / jobSkills.length) * 100);
+              }
+            }
+            return score;
+          });
+
+          const totalScore = scores.reduce((acc, s) => acc + s, 0);
+          const precision = Math.round(totalScore / allApplications.length);
+          
+          const impactCount = allApplications.filter((a: any) => 
+            ["ACCEPTED", "INTERVIEW", "INTERVIEWED"].includes(a.status)
+          ).length;
+          
+          const impact = Math.round((impactCount / allApplications.length) * 100);
+          
+          setPerfPrecision(precision);
+          setPerfImpact(impact);
+        }
       } catch (error) {
         console.error("Failed to fetch admin data", error);
       } finally {
@@ -231,12 +323,11 @@ export default function AdminDashboard() {
   }, []);
 
   useEffect(() => {
-    // Update chart data based on selected period
-    if (selectedPeriod === "6 derniers mois") {
-      adminService.getGrowthData().then(setGrowth).catch(console.error);
-    } else {
-      setGrowth(MOCK_PERIODS_DATA[selectedPeriod] || []);
-    }
+    // We only support real '6 derniers mois' for now based on backend logic
+    adminService.getGrowthData().then(data => {
+      setGrowth(data);
+      console.log("🔄 Chart Refreshed:", data);
+    }).catch(console.error);
   }, [selectedPeriod]);
 
   const handleAddSkill = () => {
@@ -581,7 +672,7 @@ export default function AdminDashboard() {
             </div>
             <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground mb-1">{card.label}</h3>
             <p className="text-4xl font-black tracking-tighter mb-4">{card.value}</p>
-            <div className={`flex gap-2 ${"action" in card && card.action ? "flex-col" : ""}`}>
+            <div className="flex gap-2">
               {"manage" in card && card.manage && (
                 <Link
                   href={card.manage as string}
@@ -589,15 +680,6 @@ export default function AdminDashboard() {
                 >
                   Gérer →
                 </Link>
-              )}
-              {"action" in card && card.action && (
-                <button
-                  onClick={(card.action as {label:string;onClick:()=>void}).onClick}
-                  className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-blue-400 hover:text-blue-300 border border-blue-400/20 hover:border-blue-400/40 bg-blue-400/5 hover:bg-blue-400/10 px-4 py-2 rounded-xl transition-all w-full justify-center"
-                >
-                  <Plus className="w-3 h-3" />
-                  {card.label === "Offres" ? "Ajouter Offre" : card.label === "Candidats" ? "Ajouter Candidat" : card.label === "Entreprises" ? "Ajouter Entreprise" : "Ajouter Candidature"}
-                </button>
               )}
             </div>
           </motion.div>
@@ -621,9 +703,8 @@ export default function AdminDashboard() {
               onChange={(e) => setSelectedPeriod(e.target.value)}
               className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm font-bold outline-none cursor-pointer hover:bg-white/10 transition-colors"
             >
-              {Object.keys(MOCK_PERIODS_DATA).map(period => (
-                <option key={period} value={period} className="bg-[#0a0a0a]">{period}</option>
-              ))}
+              <option value="6 derniers mois" className="bg-[#0a0a0a]">6 derniers mois</option>
+              <option disabled value="" className="bg-[#0a0a0a]">Autres périodes bientôt...</option>
             </select>
           </div>
           <div className="h-[400px] w-full">
@@ -727,9 +808,45 @@ export default function AdminDashboard() {
                   </div>
                 </div>
                 
-                <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 mb-6">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1">Entreprise</p>
-                  <p className="text-xs font-bold">{recruiter.recruiterProfile?.company?.name || "Non renseigné"}</p>
+                <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 mb-6 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground mb-1">Entreprise</p>
+                      <p className="text-sm font-black text-primary">{recruiter.recruiterProfile?.company?.name || "Non renseigné"}</p>
+                    </div>
+                    {recruiter.recruiterProfile?.company?.website && (
+                      <a 
+                        href={recruiter.recruiterProfile.company.website} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="p-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                      >
+                        <Globe className="w-3 h-3" />
+                      </a>
+                    )}
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/5">
+                    <div>
+                      <p className="text-[8px] font-bold text-muted-foreground uppercase flex items-center gap-1">
+                        <Sparkles className="w-2 h-2" /> Secteur
+                      </p>
+                      <p className="text-[10px] font-bold truncate">{recruiter.recruiterProfile?.company?.industry || "N/A"}</p>
+                    </div>
+                    <div>
+                      <p className="text-[8px] font-bold text-muted-foreground uppercase flex items-center gap-1">
+                        <MapPin className="w-2 h-2" /> Ville
+                      </p>
+                      <p className="text-[10px] font-bold truncate">{recruiter.recruiterProfile?.company?.location || "N/A"}</p>
+                    </div>
+                  </div>
+                  
+                  {recruiter.recruiterProfile?.company?.description && (
+                    <div className="pt-2 border-t border-white/5">
+                      <p className="text-[8px] font-bold text-muted-foreground uppercase">Description</p>
+                      <p className="text-[10px] text-muted-foreground line-clamp-2">{recruiter.recruiterProfile.company.description}</p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex gap-2">
@@ -849,26 +966,23 @@ export default function AdminDashboard() {
               <svg className="w-full h-full transform -rotate-90">
                 <circle cx="64" cy="64" r="56" stroke="rgba(255,255,255,0.05)" strokeWidth="12" fill="transparent" />
                 <circle cx="64" cy="64" r="56" stroke="#3B82F6" strokeWidth="12" fill="transparent" 
-                  strokeDasharray={351.8} strokeDashoffset={351.8 * (1 - (stats?.averageScore || 0) / 100)}
+                  strokeDasharray={351.8} strokeDashoffset={351.8 * (1 - perfPrecision / 100)}
                   strokeLinecap="round" className="transition-all duration-1000" />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-3xl font-black">{stats?.averageScore}%</span>
+                <span className="text-3xl font-black">{perfPrecision}%</span>
                 <span className="text-[8px] font-black uppercase text-muted-foreground">Matching</span>
               </div>
             </div>
-            <p className="text-center text-muted-foreground font-medium text-[10px] leading-relaxed px-4">
-              Efficacité globale de matching basée sur l&apos;IA.
-            </p>
           </div>
           <div className="mt-6 pt-6 border-t border-white/5 flex gap-3">
             <div className="flex-1 p-3 rounded-2xl bg-white/[0.02] border border-white/5 text-center">
                <p className="text-[8px] font-black text-muted-foreground uppercase mb-1">Précision</p>
-               <p className="text-sm font-black text-gradient">94.2%</p>
+               <p className="text-sm font-black text-gradient">{perfPrecision}%</p>
             </div>
             <div className="flex-1 p-3 rounded-2xl bg-white/[0.02] border border-white/5 text-center">
                <p className="text-[8px] font-black text-muted-foreground uppercase mb-1">Impact</p>
-               <p className="text-sm font-black text-gradient">88.7%</p>
+               <p className="text-sm font-black text-gradient">{perfImpact}%</p>
             </div>
           </div>
         </div>
@@ -885,7 +999,7 @@ export default function AdminDashboard() {
              <button className="text-[8px] font-black uppercase tracking-widest text-primary hover:underline">Tout voir</button>
            </div>
            <div className="space-y-3">
-             {MOCK_ACTIVITIES.slice(0, 4).map((activity) => (
+             {recentActivities.length > 0 ? recentActivities.map((activity) => (
                <div key={activity.id} className="flex items-center gap-3 p-3 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/5 transition-all">
                   <div className={`w-10 h-10 rounded-xl ${activity.bg} flex items-center justify-center ${activity.color}`}>
                     <activity.icon className="w-4 h-4" />
@@ -893,9 +1007,12 @@ export default function AdminDashboard() {
                   <div className="flex-1 min-w-0">
                     <h4 className="font-bold text-[11px] truncate">{activity.title}</h4>
                     <p className="text-[9px] text-muted-foreground truncate font-medium">{activity.description}</p>
+                    <p className="text-[8px] text-muted-foreground/50 mt-0.5 font-medium">{activity.time}</p>
                   </div>
                </div>
-             ))}
+             )) : (
+               <p className="text-center text-muted-foreground text-xs py-8">Aucune activité récente</p>
+             )}
            </div>
         </div>
 
@@ -911,23 +1028,34 @@ export default function AdminDashboard() {
              <Trophy className="w-4 h-4 text-yellow-500" />
            </div>
            <div className="space-y-3">
-             {MOCK_TOP_COMPANIES.map((company, i) => (
-               <div key={i} className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/5 transition-all group/item">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${company.color} flex items-center justify-center text-white text-[10px] font-black shadow-lg`}>
-                      {company.name.charAt(0)}
+             {topCompanies.length > 0 ? topCompanies.map((company, i) => {
+               const gradients = [
+                 "from-blue-600 to-blue-400",
+                 "from-purple-600 to-purple-400",
+                 "from-pink-600 to-pink-400",
+                 "from-orange-600 to-orange-400",
+                 "from-green-600 to-green-400",
+               ];
+               return (
+                 <div key={i} className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/5 transition-all group/item">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradients[i % gradients.length]} flex items-center justify-center text-white text-[10px] font-black shadow-lg`}>
+                        {company.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-[11px]">{company.name}</h4>
+                        <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-tighter">{company.sector}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-bold text-[11px]">{company.name}</h4>
-                      <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-tighter">{company.sector}</p>
+                    <div className="text-right">
+                      <div className="text-xs font-black group-hover/item:text-blue-400 transition-colors">{company.offers}</div>
+                      <div className="text-[7px] font-black uppercase text-muted-foreground">Offres</div>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-xs font-black group-hover/item:text-blue-400 transition-colors">{company.offers}</div>
-                    <div className="text-[7px] font-black uppercase text-muted-foreground">Offres</div>
-                  </div>
-               </div>
-             ))}
+                 </div>
+               );
+             }) : (
+               <p className="text-center text-muted-foreground text-xs py-8">Aucune entreprise</p>
+             )}
            </div>
         </div>
       </div>

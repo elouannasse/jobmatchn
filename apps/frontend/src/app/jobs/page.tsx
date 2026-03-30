@@ -5,9 +5,11 @@ import { FilterSidebar } from "@/components/jobs/filter-sidebar";
 import { JobList, Job } from "@/components/jobs/job-list";
 import { jobService, JobSearchFilters } from "@/services/job.service";
 import { motion } from "framer-motion";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Search } from "lucide-react";
 import { useAuth } from "@/context/auth-context";
 import { applicationService } from "@/services/application.service";
+import { useDebounce } from "@/hooks/use-debounce"; 
+// Wait, I should check if use-debounce hook exists. If not, do local debouncing.
 
 export default function JobsPage() {
   const { user } = useAuth();
@@ -15,6 +17,11 @@ export default function JobsPage() {
   const [appliedJobIds, setAppliedJobIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<JobSearchFilters>({});
+  const debouncedFilters = useDebounce(filters, 400);
+
+  const handleFilterChange = useCallback((newFilters: JobSearchFilters) => {
+    setFilters(prev => ({ ...prev, ...newFilters }));
+  }, []);
 
   const fetchJobs = useCallback(async (currentFilters: JobSearchFilters) => {
     setLoading(true);
@@ -35,8 +42,8 @@ export default function JobsPage() {
   }, [user]);
 
   useEffect(() => {
-    fetchJobs(filters);
-  }, [filters, fetchJobs]);
+    fetchJobs(debouncedFilters);
+  }, [debouncedFilters, fetchJobs]);
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -75,17 +82,29 @@ export default function JobsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-12">
           {/* Sidebar */}
           <div className="lg:col-span-1">
-            <FilterSidebar onFilterChange={setFilters} />
+            <FilterSidebar onFilterChange={handleFilterChange} />
           </div>
 
           {/* Jobs List */}
           <div className="lg:col-span-3 space-y-8">
-            <div className="flex justify-between items-center bg-white/5 py-4 px-8 rounded-[32px] border border-white/5">
-              <p className="text-sm font-medium text-muted-foreground">
-                <span className="text-foreground font-bold">{jobs.length}</span> offres trouvées
+            <div className="flex flex-col md:flex-row justify-between items-center gap-6 bg-white/[0.02] p-6 md:p-8 rounded-[40px] border border-white/5 backdrop-blur-xl">
+              <p className="text-sm font-bold text-muted-foreground whitespace-nowrap">
+                <span className="text-primary font-black text-2xl mr-2 italic">{jobs.length}</span> 
+                {jobs.length > 1 ? "offres trouvées" : "offre trouvée"}
               </p>
-              <div className="flex items-center gap-4">
-                <span className="text-xs text-muted-foreground italic">Actualisé à l&apos;instant</span>
+              
+              <div className="relative w-full max-w-md group">
+                <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                <input 
+                  type="text"
+                  placeholder="Rechercher par titre, compétence..."
+                  value={filters.title || ""}
+                  onChange={(e) => setFilters(prev => ({ ...prev, title: e.target.value }))}
+                  className="w-full pl-14 pr-6 py-4 rounded-3xl bg-white/5 border border-white/10 focus:border-primary/50 outline-none transition-all font-bold text-sm placeholder:text-white/20 placeholder:font-medium"
+                />
+                <div className="absolute right-6 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none opacity-0 group-focus-within:opacity-100 transition-opacity">
+                   <div className="px-2 py-1 rounded-md bg-white/10 text-[10px] font-black text-white/40">ESC</div>
+                </div>
               </div>
             </div>
 

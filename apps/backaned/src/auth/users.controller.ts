@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Param, Patch, Query, UseGuards, NotFoundException, Post, ConflictException } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Query,
+  UseGuards,
+  NotFoundException,
+  Post,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
@@ -6,6 +17,27 @@ import { Roles } from './decorators/roles.decorator';
 import { UserRole } from './dto/register.dto';
 import { NotificationGateway } from '../notification/notification.gateway';
 import { HashingService } from './hashing.service';
+import { Prisma } from '@prisma/client';
+
+interface CreateUserDto {
+  email: string;
+  password?: string;
+  firstName: string;
+  lastName: string;
+  role: UserRole;
+  company?: string;
+  phone?: string;
+}
+
+interface UpdateUserDto {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  role?: string;
+  companyId?: string;
+  phone?: string;
+  status?: string;
+}
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -18,17 +50,21 @@ export class UsersController {
   ) {}
 
   @Post()
-  async create(@Body() dto: any) {
+  async create(@Body() dto: CreateUserDto) {
     const { email, password, firstName, lastName, role, company, phone } = dto;
 
-    const existingUser = await this.prisma.user.findUnique({ where: { email } });
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email },
+    });
     if (existingUser) {
       throw new ConflictException('Cet email est déjà utilisé');
     }
 
-    const hashedPassword = await this.hashingService.hash(password);
+    const hashedPassword = await this.hashingService.hash(
+      password || 'JobMatchn2026',
+    );
 
-    return this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const user = await tx.user.create({
         data: {
           email,
@@ -47,7 +83,9 @@ export class UsersController {
           if (comp) {
             companyId = comp.id;
           } else {
-            const newComp = await tx.company.create({ data: { name: company } });
+            const newComp = await tx.company.create({
+              data: { name: company },
+            });
             companyId = newComp.id;
           }
         }
@@ -56,11 +94,8 @@ export class UsersController {
           data: {
             userId: user.id,
             companyId,
-            // @ts-ignore
             phone,
-            // @ts-ignore
             isApproved: true,
-            // @ts-ignore
             approvedAt: new Date(),
           },
         });
@@ -79,19 +114,22 @@ export class UsersController {
   }
 
   @Get()
-  async findAll(@Query('role') role?: string, @Query('isApproved') isApproved?: string) {
+  async findAll(
+    @Query('role') role?: string,
+    @Query('isApproved') isApproved?: string,
+  ) {
     const where: any = {};
     if (role) {
       where.role = role;
     }
     if (isApproved !== undefined) {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       where.recruiterProfile = {
-        // @ts-ignore
         isApproved: isApproved === 'true',
       };
     }
 
-    const users = await this.prisma.user.findMany({
+    return this.prisma.user.findMany({
       where,
       select: {
         id: true,
@@ -102,12 +140,15 @@ export class UsersController {
         createdAt: true,
         recruiterProfile: {
           select: {
-            // @ts-ignore
             isApproved: true,
             phone: true,
             company: {
               select: {
                 name: true,
+                industry: true,
+                location: true,
+                website: true,
+                description: true,
               },
             },
           },
@@ -115,15 +156,13 @@ export class UsersController {
         candidateProfile: true,
       },
     });
-
-    return users;
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() dto: any) {
-    const { firstName, lastName, email, role, companyId, phone, status } = dto;
+  async update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
+    const { firstName, lastName, email, companyId, phone, status } = dto;
 
-    return this.prisma.$transaction(async (tx) => {
+    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Update User basic info
       const user = await tx.user.update({
         where: { id },
@@ -134,23 +173,19 @@ export class UsersController {
         },
       });
 
-      if (user.role === UserRole.RECRUITER) {
+      if (user.role === (UserRole.RECRUITER as any)) {
         // Update or create RecruiterProfile
         await tx.recruiterProfile.upsert({
           where: { userId: id },
           create: {
             userId: id,
             companyId: companyId || null,
-            // @ts-ignore
             phone: phone || null,
-            // @ts-ignore
             isApproved: status === 'ACTIVE',
           },
           update: {
             companyId: companyId || null,
-            // @ts-ignore
             phone: phone || null,
-            // @ts-ignore
             isApproved: status === 'ACTIVE',
           },
         });
@@ -169,16 +204,19 @@ export class UsersController {
       include: { recruiterProfile: true },
     });
 
-    if (!user || user.role !== UserRole.RECRUITER || !user.recruiterProfile) {
+    if (
+      !user ||
+      user.role !== (UserRole.RECRUITER as any) ||
+      !user.recruiterProfile
+    ) {
       throw new NotFoundException('Recruteur non trouvé');
     }
 
-    await this.prisma.recruiterProfile.update({
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+    await (this.prisma as any).recruiterProfile.update({
       where: { userId: id },
       data: {
-        // @ts-ignore
         isApproved: true,
-        // @ts-ignore
         approvedAt: new Date(),
       },
     });
@@ -197,16 +235,19 @@ export class UsersController {
       include: { recruiterProfile: true },
     });
 
-    if (!user || user.role !== UserRole.RECRUITER || !user.recruiterProfile) {
+    if (
+      !user ||
+      user.role !== (UserRole.RECRUITER as any) ||
+      !user.recruiterProfile
+    ) {
       throw new NotFoundException('Recruteur non trouvé');
     }
 
-    await this.prisma.recruiterProfile.update({
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+    await (this.prisma as any).recruiterProfile.update({
       where: { userId: id },
       data: {
-        // @ts-ignore
         isApproved: false,
-        // @ts-ignore
         rejectedReason: reason,
       },
     });

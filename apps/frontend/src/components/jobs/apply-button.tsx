@@ -6,6 +6,7 @@ import { Check, Loader2, Send } from "lucide-react";
 import { applicationService } from "@/services/application.service";
 import { toast } from "sonner";
 import { useAuth } from "@/context/auth-context";
+import { AuthPromptModal } from "@/components/auth/auth-prompt-modal";
 
 interface ApplyButtonProps {
   jobId: string;
@@ -16,18 +17,18 @@ export function ApplyButton({ jobId, initiallyApplied = false }: ApplyButtonProp
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [applied, setApplied] = useState(initiallyApplied);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const handleApply = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
     if (!user) {
-      toast.error("Veuillez vous connecter pour postuler");
+      setShowAuthModal(true);
       return;
     }
 
     if (user.role !== "CANDIDATE") {
-      toast.error("Seuls les candidats peuvent postuler aux offres");
       return;
     }
 
@@ -50,6 +51,11 @@ export function ApplyButton({ jobId, initiallyApplied = false }: ApplyButtonProp
     }
   };
 
+  // Hide button for Recruiter/Admin
+  if (user && user.role !== "CANDIDATE") {
+    return null;
+  }
+
   if (applied) {
     return (
       <motion.div
@@ -63,34 +69,42 @@ export function ApplyButton({ jobId, initiallyApplied = false }: ApplyButtonProp
   }
 
   return (
-    <button
-      onClick={handleApply}
-      disabled={loading}
-      className="relative overflow-hidden group px-6 py-2.5 rounded-2xl bg-primary text-primary-foreground font-bold text-sm hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:hover:scale-100"
-    >
-      <AnimatePresence mode="wait">
-        {loading ? (
-          <motion.div
-            key="loading"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="flex items-center gap-2"
-          >
-            <Loader2 className="w-4 h-4 animate-spin" /> Envoi...
-          </motion.div>
-        ) : (
-          <motion.div
-            key="idle"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="flex items-center gap-2"
-          >
-            <Send className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" /> Postuler
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </button>
+    <>
+      <button
+        onClick={handleApply}
+        disabled={loading}
+        className="relative overflow-hidden group px-6 py-2.5 rounded-2xl bg-primary text-primary-foreground font-bold text-sm hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:hover:scale-100"
+      >
+        <AnimatePresence mode="wait">
+          {loading ? (
+            <motion.div
+              key="loading"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="flex items-center gap-2"
+            >
+              <Loader2 className="w-4 h-4 animate-spin" /> Envoi...
+            </motion.div>
+          ) : (
+            <motion.div
+              key="idle"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="flex items-center gap-2"
+            >
+              <Send className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" /> Postuler
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </button>
+
+      <AuthPromptModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        redirectPath="/jobs"
+      />
+    </>
   );
 }

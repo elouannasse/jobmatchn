@@ -9,5 +9,6 @@ import { NotificationModule } from '../notification/notification.module';
   imports: [PrismaModule, MatchingModule, NotificationModule],
   controllers: [ApplicationController],
   providers: [ApplicationService],
+  exports: [ApplicationService],
 })
 export class ApplicationModule {}

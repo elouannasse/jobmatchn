@@ -59,12 +59,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       role: decoded.role,
     });
     
+    // Check for redirect after login
+    const redirectPath = localStorage.getItem("redirectAfterLogin");
+    if (redirectPath) {
+      localStorage.removeItem("redirectAfterLogin");
+      router.push(redirectPath);
+      return;
+    }
+
     if (decoded.role === "ADMIN") {
       router.push("/dashboard/admin");
     } else if (decoded.role === "RECRUITER") {
       router.push("/dashboard/recruiter");
     } else {
-      router.push("/dashboard/candidate");
+      router.push("/dashboard/candidat");
     }
   };
 

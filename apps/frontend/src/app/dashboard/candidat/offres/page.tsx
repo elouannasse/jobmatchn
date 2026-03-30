@@ -19,6 +19,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import api from "@/services/api";
 import { toast } from "sonner";
 import { ApplyModal } from "@/components/dashboard/apply-modal";
+import { JobDetailsModal } from "@/components/dashboard/job-details-modal";
 
 interface Job {
   id: string;
@@ -56,6 +57,8 @@ export default function JobBoard() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
 
   const fetchJobs = useCallback(async () => {
     try {
@@ -83,6 +86,11 @@ export default function JobBoard() {
   const toggleApply = (job: Job) => {
     setSelectedJob(job);
     setIsApplyModalOpen(true);
+  };
+
+  const viewDetails = (jobId: string) => {
+    setSelectedJobId(jobId);
+    setIsDetailsModalOpen(true);
   };
 
   const getScoreColor = (score: number) => {
@@ -232,11 +240,20 @@ export default function JobBoard() {
                 <span className="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-white/5 border border-white/10 text-muted-foreground flex items-center gap-1.5">
                    <MapPin className="w-3 h-3" /> {job.location}
                 </span>
-                {(job.salaryMin || job.salaryMax) && (
-                  <span className="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-primary/5 border border-primary/20 text-primary flex items-center gap-1.5">
-                     <Euro className="w-3 h-3" /> {job.salaryMin ? `${(job.salaryMin/1000).toFixed(0)}k` : "?"} — {job.salaryMax ? `${(job.salaryMax/1000).toFixed(0)}k` : "?"}
-                  </span>
-                )}
+                {(() => {
+                  const minK = job.salaryMin ? Math.round(job.salaryMin / 1000) : 0;
+                  const maxK = job.salaryMax ? Math.round(job.salaryMax / 1000) : 0;
+                  let salaryText = "Non précisé";
+                  if (minK > 0 && maxK > 0) salaryText = `${minK}K — ${maxK}K`;
+                  else if (minK > 0) salaryText = `À partir de ${minK}K`;
+                  else if (maxK > 0) salaryText = `Jusqu'à ${maxK}K`;
+
+                  return (
+                    <span className="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-primary/5 border border-primary/20 text-primary flex items-center gap-1.5">
+                       <Euro className="w-3 h-3" /> {salaryText}
+                    </span>
+                  );
+                })()}
               </div>
 
               {/* Skills Previews */}
@@ -261,7 +278,10 @@ export default function JobBoard() {
                 >
                   Postuler maintenant
                 </button>
-                <button className="flex-1 py-4 rounded-[22px] bg-white/5 border border-white/10 font-bold uppercase tracking-widest text-[10px] hover:bg-white/10 transition-all flex items-center justify-center">
+                <button 
+                  onClick={() => viewDetails(job.id)}
+                  className="flex-1 py-4 rounded-[22px] bg-white/5 border border-white/10 font-bold uppercase tracking-widest text-[10px] hover:bg-white/10 transition-all flex items-center justify-center cursor-pointer"
+                >
                    Details
                 </button>
               </div>
@@ -302,6 +322,12 @@ export default function JobBoard() {
         onSuccess={() => {
           // Maybe refresh stats or list if needed
         }}
+      />
+      <JobDetailsModal 
+        isOpen={isDetailsModalOpen}
+        onClose={() => setIsDetailsModalOpen(false)}
+        jobId={selectedJobId}
+        onApply={(job) => toggleApply(job)}
       />
     </div>
   );
