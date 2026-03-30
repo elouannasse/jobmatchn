@@ -90,7 +90,9 @@ export class MatchingService {
     // Formula: (matchingSkills / totalRequiredSkills) * 100
     const score = (matches.length / normalizedJob.length) * 100;
 
-    console.log(`[MatchingService] Skill match: ${matches.length}/${normalizedJob.length} -> ${score}%`);
+    console.log(
+      `[MatchingService] Skill match: ${matches.length}/${normalizedJob.length} -> ${score}%`,
+    );
     return score;
   }
 

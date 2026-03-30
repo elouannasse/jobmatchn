@@ -73,13 +73,16 @@ export class StatsService {
     });
 
     // Group by month
-    const growth = users.reduce((acc: Record<string, number>, user) => {
-      const month = user.createdAt.toLocaleString('default', {
-        month: 'short',
-      });
-      acc[month] = (acc[month] || 0) + 1;
-      return acc;
-    }, {});
+    const growth = users.reduce(
+      (acc: Record<string, number>, user) => {
+        const month = user.createdAt.toLocaleString('default', {
+          month: 'short',
+        });
+        acc[month] = (acc[month] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
 
     return Object.entries(growth).map(([month, count]) => ({
       month,
@@ -140,11 +143,16 @@ export class StatsService {
       },
     });
 
-    const growth = monthlyApps.reduce((acc: Record<string, number>, app) => {
-      const month = app.createdAt.toLocaleString('default', { month: 'short' });
-      acc[month] = (acc[month] || 0) + 1;
-      return acc;
-    }, {});
+    const growth = monthlyApps.reduce(
+      (acc: Record<string, number>, app) => {
+        const month = app.createdAt.toLocaleString('default', {
+          month: 'short',
+        });
+        acc[month] = (acc[month] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
 
     const monthlyData = Object.entries(growth).map(([month, count]) => ({
       month,
