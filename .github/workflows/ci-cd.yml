@@ -51,6 +51,11 @@ jobs:
       - name: Run Backend Unit Tests
         run: npm run test -w backaned
 
+      - name: Initialize Database Schema
+        run: cd apps/backaned && npx prisma db push --accept-data-loss
+        env:
+          DATABASE_URL: postgresql://jobmatch_user:jobmatch_password@localhost:5434/jobmatch_db?schema=public
+
       - name: Run Backend E2E Tests
         run: npm run test:e2e -w backaned
         env:
