@@ -36,7 +36,7 @@ jobs:
         run: npm install
 
       - name: Generate Prisma Client
-        run: npx prisma generate --schema=apps/backaned/prisma/schema.prisma
+        run: cd apps/backaned && npx prisma generate
         env:
           DATABASE_URL: postgresql://jobmatch_user:jobmatch_password@localhost:5434/jobmatch_db?schema=public
 
@@ -95,8 +95,9 @@ jobs:
 
       - name: Prisma Validate & Generate
         run: |
-          npx prisma validate --schema=apps/backaned/prisma/schema.prisma
-          npx prisma generate --schema=apps/backaned/prisma/schema.prisma
+          cd apps/backaned
+          npx prisma validate
+          npx prisma generate
 
   build-and-push:
     needs: [backend-tests, frontend-tests, database-check]
