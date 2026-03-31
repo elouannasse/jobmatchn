@@ -14,7 +14,7 @@ describe('AuthService', () => {
   let jwt: JwtService;
   let mailer: MailerService;
 
-  const mockPrismaService = {
+  const mockPrismaService: any = {
     user: {
       findUnique: jest.fn(),
       create: jest.fn(),
@@ -27,7 +27,7 @@ describe('AuthService', () => {
       findUnique: jest.fn(),
       delete: jest.fn(),
     },
-    $transaction: jest.fn((arg) => {
+    $transaction: jest.fn((arg: any): any => {
       if (Array.isArray(arg)) return Promise.resolve(arg);
       return arg(mockPrismaService);
     }),

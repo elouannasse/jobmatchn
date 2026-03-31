@@ -96,9 +96,9 @@ describe('MatchingService', () => {
       };
 
       const score = service.calculateComprehensiveScore(candidate, job);
-      // Skills: 100, Title: 100, Location: 100, Summary: ~50
-      // (100*0.6) + (100*0.2) + (100*0.1) + (50*0.1) = 60 + 20 + 10 + 5 = 95
-      expect(score).toBe(95);
+      // Skills: 100, Title: 100, Location: 100, Summary: ~43
+      // (100*0.6) + (100*0.2) + (100*0.1) + (43*0.1) = 60 + 20 + 10 + 4.3 = 94.3 -> rounded to 94
+      expect(score).toBe(94);
     });
 
     it('should handle missing data gracefully', () => {

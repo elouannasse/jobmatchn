@@ -10,7 +10,7 @@ import { Prisma } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import { LoginDto } from './dto/login.dto';
 import { MailerService } from '@nestjs-modules/mailer';
-
+import * as crypto from 'crypto';
 @Injectable()
 export class AuthService {
   constructor(
@@ -173,7 +173,6 @@ export class AuthService {
     });
 
     // Générer un token sécurisé
-    const crypto = await import('crypto');
     const token = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 1); // 1 heure
