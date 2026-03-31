@@ -118,7 +118,7 @@ export class ApplicationService {
 
     // Optionnel: recalculer les scores à 0 à la volée pour garantir la fraîcheur
     const updatedApps = await Promise.all(
-      applications.map(async (app) => {
+      applications.map(async (app: any) => {
         if (app.score === 0) {
           // On récupère le profil complet pour le matching
           const fullCandidate = await this.prisma.candidateProfile.findUnique({

@@ -74,7 +74,7 @@ export class StatsService {
 
     // Group by month
     const growth = users.reduce(
-      (acc: Record<string, number>, user) => {
+      (acc: Record<string, number>, user: any) => {
         const month = user.createdAt.toLocaleString('default', {
           month: 'short',
         });
@@ -144,7 +144,7 @@ export class StatsService {
     });
 
     const growth = monthlyApps.reduce(
-      (acc: Record<string, number>, app) => {
+      (acc: Record<string, number>, app: any) => {
         const month = app.createdAt.toLocaleString('default', {
           month: 'short',
         });
