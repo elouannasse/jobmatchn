@@ -98,6 +98,8 @@ jobs:
           cd apps/backaned
           npx prisma validate
           npx prisma generate
+        env:
+          DATABASE_URL: postgresql://jobmatch_user:jobmatch_password@localhost:5434/jobmatch_db?schema=public
 
   build-and-push:
     needs: [backend-tests, frontend-tests, database-check]
